@@ -40,10 +40,10 @@ const mockPredictions: Prediction[] = [
 
 const PredictionCard = () => {
   const getConfidenceBadge = (confidence: number) => {
-    if (confidence >= 95) return { variant: "default" as const, label: "Excellent" };
-    if (confidence >= 90) return { variant: "secondary" as const, label: "Very Good" };
-    if (confidence >= 85) return { variant: "outline" as const, label: "Good" };
-    return { variant: "destructive" as const, label: "Low" };
+    if (confidence >= 95) return { variant: "default" as const, label: "Sangat Baik" };
+    if (confidence >= 90) return { variant: "secondary" as const, label: "Baik Sekali" };
+    if (confidence >= 85) return { variant: "outline" as const, label: "Baik" };
+    return { variant: "destructive" as const, label: "Rendah" };
   };
 
   return (
@@ -51,7 +51,7 @@ const PredictionCard = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Brain className="h-5 w-5 text-accent" />
-          Latest EUR/USD Predictions
+          Prediksi EUR/USD Terbaru
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -75,7 +75,7 @@ const PredictionCard = () => {
                 
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div>
-                    <div className="text-muted-foreground">Timeframe</div>
+                    <div className="text-muted-foreground">Periode</div>
                     <div className="font-medium">{prediction.timeframe}</div>
                   </div>
                   <div>
@@ -85,7 +85,7 @@ const PredictionCard = () => {
                   <div>
                     <div className="text-muted-foreground flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      Generated
+                      Dibuat
                     </div>
                     <div className="font-medium">
                       {new Date(prediction.timestamp).toLocaleTimeString()}

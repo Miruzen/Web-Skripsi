@@ -16,8 +16,8 @@ interface NewsItem {
 const mockNews: NewsItem[] = [
   {
     id: "1",
-    title: "ECB Signals Potential Rate Changes in Q2",
-    summary: "European Central Bank officials hint at monetary policy adjustments following inflation data...",
+    title: "ECB Sinyal Perubahan Suku Bunga Potensial di Q2",
+    summary: "Pejabat Bank Sentral Eropa mengisyaratkan penyesuaian kebijakan moneter menyusul data inflasi...",
     timestamp: "2024-01-15 13:45:00",
     source: "Reuters",
     impact: "High",
@@ -25,8 +25,8 @@ const mockNews: NewsItem[] = [
   },
   {
     id: "2",
-    title: "US Dollar Strengthens on Employment Data",
-    summary: "Latest employment figures exceed expectations, boosting USD confidence across major pairs...",
+    title: "Dolar AS Menguat pada Data Ketenagakerjaan",
+    summary: "Angka ketenagakerjaan terbaru melampaui ekspektasi, meningkatkan kepercayaan USD di berbagai pasangan utama...",
     timestamp: "2024-01-15 12:30:00", 
     source: "Bloomberg",
     impact: "Medium",
@@ -34,17 +34,17 @@ const mockNews: NewsItem[] = [
   },
   {
     id: "3",
-    title: "European Manufacturing Data Shows Recovery",
-    summary: "Manufacturing PMI indicates continued growth in the eurozone, supporting EUR outlook...",
+    title: "Data Manufaktur Eropa Menunjukkan Pemulihan",
+    summary: "PMI manufaktur menunjukkan pertumbuhan berkelanjutan di zona euro, mendukung prospek EUR...",
     timestamp: "2024-01-15 11:15:00",
     source: "Financial Times",
-    impact: "Medium", 
+    impact: "Medium",
     url: "#"
   },
   {
     id: "4",
-    title: "Fed Minutes Reveal Cautious Optimism",
-    summary: "Federal Reserve meeting minutes suggest measured approach to future rate decisions...",
+    title: "Risalah Fed Ungkap Optimisme Hati-hati",
+    summary: "Risalah rapat Federal Reserve menunjukkan pendekatan terukur terhadap keputusan suku bunga masa depan...",
     timestamp: "2024-01-15 10:00:00",
     source: "MarketWatch",
     impact: "Low",
@@ -71,7 +71,7 @@ const NewsCard = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Newspaper className="h-5 w-5 text-accent" />
-          Latest Forex News
+          Berita Forex Terbaru
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -104,7 +104,7 @@ const NewsCard = () => {
                   </div>
                   
                   <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
-                    Read More
+                    Baca Selengkapnya
                     <ExternalLink className="h-3 w-3" />
                   </Button>
                 </div>

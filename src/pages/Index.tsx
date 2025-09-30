@@ -1,4 +1,3 @@
-import Navigation from "@/components/Navigation";
 import LiveRate from "@/components/LiveRate";
 import PredictionCard from "@/components/PredictionCard";
 import NewsCard from "@/components/NewsCard";
@@ -11,7 +10,6 @@ import { Link } from "react-router-dom";
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
       
       {/* Hero Section */}
       <div className="bg-gradient-card border-b border-border">
@@ -19,14 +17,14 @@ const Index = () => {
           <div className="text-center max-w-4xl mx-auto">
             <div className="mb-6">
               <Badge variant="outline" className="text-accent border-accent/50 mb-4">
-                Powered by Hybrid AI Model
+                Didukung oleh Model AI Hibrida
               </Badge>
               <h1 className="text-5xl font-bold text-foreground mb-6">
-                Advanced EUR/USD <span className="text-accent">Predictions</span>
+                Prediksi EUR/USD <span className="text-accent">Canggih</span>
               </h1>
               <p className="text-xl text-muted-foreground leading-relaxed">
-                Real-time Forex predictions using cutting-edge hybrid AI models. 
-                Get accurate EUR/USD forecasts with comprehensive market analysis.
+                Prediksi Forex real-time menggunakan model AI hibrida terdepan. 
+                Dapatkan prakiraan EUR/USD yang akurat dengan analisis pasar komprehensif.
               </p>
             </div>
             
@@ -34,13 +32,13 @@ const Index = () => {
               <Button variant="premium" size="lg" asChild>
                 <Link to="/analysis" className="gap-2">
                   <BarChart3 className="h-5 w-5" />
-                  View Analysis
+                  Lihat Analisis
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button variant="outline" size="lg" className="gap-2">
                 <Brain className="h-5 w-5" />
-                Learn More
+                Pelajari Lebih Lanjut
               </Button>
             </div>
           </div>
@@ -62,12 +60,12 @@ const Index = () => {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <TrendingUp className="h-4 w-4" />
-                    Today's Prediction
+                    Prediksi Hari Ini
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-success">1.0863</div>
-                  <div className="text-sm text-muted-foreground">94.2% confidence</div>
+                  <div className="text-sm text-muted-foreground">94.2% kepercayaan</div>
                 </CardContent>
               </Card>
 
@@ -75,12 +73,12 @@ const Index = () => {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <Brain className="h-4 w-4" />
-                    Model Accuracy
+                    Akurasi Model
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-accent">97.3%</div>
-                  <div className="text-sm text-muted-foreground">MAPE Score</div>
+                  <div className="text-sm text-muted-foreground">Skor MAPE</div>
                 </CardContent>
               </Card>
 
@@ -88,12 +86,12 @@ const Index = () => {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <Newspaper className="h-4 w-4" />
-                    Market Sentiment
+                    Sentimen Pasar
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-foreground">Bullish</div>
-                  <div className="text-sm text-success">+2.1% trend</div>
+                  <div className="text-sm text-success">+2.1% tren</div>
                 </CardContent>
               </Card>
             </div>
@@ -111,15 +109,15 @@ const Index = () => {
           <Card className="shadow-card bg-gradient-primary">
             <CardContent className="p-8">
               <h2 className="text-3xl font-bold text-primary-foreground mb-4">
-                Ready for Deeper Analysis?
+                Siap untuk Analisis yang Lebih Mendalam?
               </h2>
               <p className="text-primary-foreground/90 mb-6 text-lg">
-                Explore detailed prediction comparisons, historical accuracy, and advanced metrics
+                Jelajahi perbandingan prediksi detail, akurasi historis, dan metrik lanjutan
               </p>
               <Button variant="outline" size="lg" asChild className="bg-white/10 border-white/20 text-white hover:bg-white/20">
                 <Link to="/analysis" className="gap-2">
                   <BarChart3 className="h-5 w-5" />
-                  Open Analysis Dashboard
+                  Buka Dashboard Analisis
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>

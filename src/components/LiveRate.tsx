@@ -31,10 +31,10 @@ const LiveRate = () => {
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-accent" />
-            EUR/USD Live Rate
+            Kurs EUR/USD Langsung
           </span>
           <Badge variant="outline" className="text-accent border-accent/50">
-            LIVE
+            LANGSUNG
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -63,11 +63,11 @@ const LiveRate = () => {
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <div className="text-muted-foreground">24h High</div>
+              <div className="text-muted-foreground">Tertinggi 24j</div>
               <div className="font-medium">1.0892</div>
             </div>
             <div>
-              <div className="text-muted-foreground">24h Low</div>
+              <div className="text-muted-foreground">Terendah 24j</div>
               <div className="font-medium">1.0801</div>
             </div>
           </div>
