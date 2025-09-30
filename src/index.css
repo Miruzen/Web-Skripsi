@@ -2,41 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* Professional Forex Trading Platform Design System
+All colors MUST be HSL for consistency and theming.
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Core theme - Professional dark trading platform */
+    --background: 215 25% 6%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Card system for data sections */
+    --card: 215 25% 8%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    /* Popover components */
+    --popover: 215 25% 8%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 222.2 47.4% 11.2%;
+    /* Primary - Deep professional blue */
+    --primary: 215 65% 35%;
     --primary-foreground: 210 40% 98%;
+    --primary-glow: 215 65% 45%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - Muted slate for supporting elements */
+    --secondary: 215 20% 15%;
+    --secondary-foreground: 210 40% 90%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted for subtle elements */
+    --muted: 215 20% 12%;
+    --muted-foreground: 215 15% 65%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - Professional emerald for positive/gains */
+    --accent: 158 65% 45%;
+    --accent-foreground: 210 40% 98%;
+    --accent-glow: 158 65% 55%;
 
-    --destructive: 0 84.2% 60.2%;
+    /* Trading specific colors */
+    --success: 158 65% 45%;
+    --success-foreground: 210 40% 98%;
+    --danger: 0 75% 55%;
+    --danger-foreground: 210 40% 98%;
+    --warning: 45 90% 55%;
+    --warning-foreground: 215 25% 6%;
+
+    /* System colors */
+    --destructive: 0 75% 55%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Borders and inputs */
+    --border: 215 20% 18%;
+    --input: 215 20% 18%;
+    --ring: 215 65% 45%;
 
-    --radius: 0.5rem;
+    /* Gradients for depth and visual interest */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-card: linear-gradient(135deg, hsl(var(--card)), hsl(215 25% 10%));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(var(--accent-glow)));
+
+    /* Shadows for depth */
+    --shadow-card: 0 4px 20px -2px hsl(215 100% 4% / 0.3);
+    --shadow-primary: 0 8px 32px -8px hsl(var(--primary) / 0.4);
+    --shadow-glow: 0 0 40px hsl(var(--accent) / 0.2);
+
+    /* Animation timing */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
