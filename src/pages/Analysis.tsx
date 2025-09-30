@@ -36,10 +36,8 @@ const Analysis = () => {
   }, 0) / data.length * 100;
 
   const timeframes = [
-    { value: "1D", label: "24 Hours" },
-    { value: "7D", label: "7 Days" },
-    { value: "1M", label: "1 Month" },
-    { value: "3M", label: "3 Months" },
+    { value: "1D", label: "Harian" },
+    { value: "1M", label: "Bulanan" },
   ];
 
   return (
@@ -50,10 +48,10 @@ const Analysis = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-foreground mb-2">
-                EUR/USD Prediction Analysis
+                Analisis Prediksi EUR/USD
               </h1>
               <p className="text-muted-foreground">
-                Compare Model C predictions against actual market data
+                Bandingkan prediksi Model C dengan data pasar aktual
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -71,7 +69,7 @@ const Analysis = () => {
               </Select>
               <Button variant="outline" className="gap-2">
                 <Calendar className="h-4 w-4" />
-                Custom Range
+                Rentang Kustom
               </Button>
             </div>
           </div>
@@ -85,7 +83,7 @@ const Analysis = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Target className="h-4 w-4" />
-                Model Accuracy (MAPE)
+                Akurasi Model (MAPE)
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -93,7 +91,7 @@ const Analysis = () => {
                 {mape.toFixed(2)}%
               </div>
               <Badge variant="secondary" className="mt-2">
-                Excellent
+                Sangat Baik
               </Badge>
             </CardContent>
           </Card>
@@ -102,7 +100,7 @@ const Analysis = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                Current Rate
+                Kurs Saat Ini
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -117,7 +115,7 @@ const Analysis = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <BarChart3 className="h-4 w-4" />
-                Prediction Count
+                Jumlah Prediksi
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -125,7 +123,7 @@ const Analysis = () => {
                 {data.length}
               </div>
               <div className="text-sm text-muted-foreground">
-                Data points
+                Titik data
               </div>
             </CardContent>
           </Card>
@@ -133,7 +131,7 @@ const Analysis = () => {
           <Card className="shadow-card">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Correlation
+                Korelasi
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -141,7 +139,7 @@ const Analysis = () => {
                 0.97
               </div>
               <div className="text-sm text-muted-foreground">
-                High correlation
+                Korelasi tinggi
               </div>
             </CardContent>
           </Card>
@@ -152,7 +150,7 @@ const Analysis = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              Actual vs Predicted EUR/USD Rates
+              Kurs EUR/USD Aktual vs Prediksi
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -184,7 +182,7 @@ const Analysis = () => {
                     stroke="hsl(var(--primary))"
                     strokeWidth={2}
                     dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
-                    name="Actual Rate"
+                    name="Kurs Aktual"
                   />
                   <Line
                     type="monotone"
@@ -193,7 +191,7 @@ const Analysis = () => {
                     strokeWidth={2}
                     strokeDasharray="5 5"
                     dot={{ fill: "hsl(var(--accent))", strokeWidth: 2, r: 4 }}
-                    name="Model C Prediction"
+                    name="Prediksi Model C"
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -205,49 +203,49 @@ const Analysis = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="shadow-card">
             <CardHeader>
-              <CardTitle>Performance Summary</CardTitle>
+              <CardTitle>Ringkasan Performa</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Average Deviation</span>
+                <span className="text-muted-foreground">Deviasi Rata-rata</span>
                 <span className="font-medium">±0.0018</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Maximum Error</span>
+                <span className="text-muted-foreground">Kesalahan Maksimum</span>
                 <span className="font-medium">0.0045</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Prediction Confidence</span>
+                <span className="text-muted-foreground">Kepercayaan Prediksi</span>
                 <Badge variant="default">97.2%</Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Model Status</span>
-                <Badge className="bg-success text-success-foreground">Active</Badge>
+                <span className="text-muted-foreground">Status Model</span>
+                <Badge className="bg-success text-success-foreground">Aktif</Badge>
               </div>
             </CardContent>
           </Card>
 
           <Card className="shadow-card">
             <CardHeader>
-              <CardTitle>Model Insights</CardTitle>
+              <CardTitle>Wawasan Model</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Model C demonstrates excellent predictive accuracy with a MAPE of {mape.toFixed(2)}%, 
-                indicating strong performance in forecasting EUR/USD movements.
+                Model C menunjukkan akurasi prediksi yang sangat baik dengan MAPE {mape.toFixed(2)}%, 
+                menandakan performa yang kuat dalam meramalkan pergerakan EUR/USD.
               </p>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-success rounded-full"></div>
-                  <span className="text-sm">High accuracy in trend prediction</span>
+                  <span className="text-sm">Akurasi tinggi dalam prediksi tren</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span className="text-sm">Consistent performance across timeframes</span>
+                  <span className="text-sm">Performa konsisten di berbagai timeframe</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-accent rounded-full"></div>
-                  <span className="text-sm">Real-time adaptability</span>
+                  <span className="text-sm">Adaptabilitas waktu nyata</span>
                 </div>
               </div>
             </CardContent>
