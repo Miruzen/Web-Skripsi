@@ -4,7 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { Calendar, TrendingUp, Target, BarChart3 } from "lucide-react";
+import { Calendar, TrendingUp, Target, BarChart3, Sparkles } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data for demonstration
 const generateMockData = (timeframe: string) => {
@@ -29,6 +34,77 @@ const generateMockData = (timeframe: string) => {
 const Analysis = () => {
   const [timeframe, setTimeframe] = useState("7D");
   const [data] = useState(() => generateMockData(timeframe));
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [titleSentiment, setTitleSentiment] = useState<string | null>(null);
+  const [contentSentiment, setContentSentiment] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const { toast } = useToast();
+
+  const analyzeSentiment = async () => {
+    if (!title.trim() || !content.trim()) {
+      toast({
+        title: "Error",
+        description: "Silakan isi judul dan konten terlebih dahulu",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      const { data: result, error } = await supabase.functions.invoke('analyze-sentiment', {
+        body: { title, content }
+      });
+
+      if (error) throw error;
+
+      setTitleSentiment(result.titleSentiment);
+      setContentSentiment(result.contentSentiment);
+      
+      toast({
+        title: "Analisis Selesai",
+        description: "Sentimen telah berhasil dianalisis",
+      });
+    } catch (error) {
+      console.error('Sentiment analysis error:', error);
+      toast({
+        title: "Error",
+        description: "Gagal menganalisis sentimen. Silakan coba lagi.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const getSentimentColor = (sentiment: string | null) => {
+    if (!sentiment) return "secondary";
+    switch (sentiment) {
+      case "positive":
+        return "default";
+      case "negative":
+        return "destructive";
+      case "neutral":
+        return "secondary";
+      default:
+        return "secondary";
+    }
+  };
+
+  const getSentimentLabel = (sentiment: string | null) => {
+    if (!sentiment) return "-";
+    switch (sentiment) {
+      case "positive":
+        return "Positif";
+      case "negative":
+        return "Negatif";
+      case "neutral":
+        return "Netral";
+      default:
+        return sentiment;
+    }
+  };
   
   // Calculate MAPE (Mean Absolute Percentage Error)
   const mape = data.reduce((acc, point) => {
@@ -77,6 +153,88 @@ const Analysis = () => {
       </div>
 
       <div className="container mx-auto px-6 py-8 space-y-8">
+        {/* Sentiment Analysis Section */}
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5" />
+              Analisis Sentimen
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Judul</Label>
+                  <Input
+                    id="title"
+                    placeholder="Masukkan judul untuk analisis..."
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="content">Konten</Label>
+                  <Textarea
+                    id="content"
+                    placeholder="Masukkan konten untuk analisis..."
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    rows={6}
+                  />
+                </div>
+                <Button 
+                  onClick={analyzeSentiment} 
+                  disabled={isAnalyzing}
+                  className="w-full"
+                >
+                  {isAnalyzing ? "Menganalisis..." : "Analisis Sentimen"}
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <Card className="bg-muted/50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Hasil Analisis Judul</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Sentimen:</span>
+                      <Badge variant={getSentimentColor(titleSentiment)}>
+                        {getSentimentLabel(titleSentiment)}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-muted/50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Hasil Analisis Konten</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Sentimen:</span>
+                      <Badge variant={getSentimentColor(contentSentiment)}>
+                        {getSentimentLabel(contentSentiment)}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {(titleSentiment || contentSentiment) && (
+                  <div className="pt-4 space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      <strong>Catatan:</strong> Analisis sentimen menggunakan AI untuk menentukan 
+                      apakah teks memiliki sentimen positif, negatif, atau netral berdasarkan 
+                      konteks dan pilihan kata.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="shadow-card">
