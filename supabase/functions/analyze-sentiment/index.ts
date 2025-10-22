@@ -5,6 +5,67 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface SentimentDetail {
+  sentiment: string;
+  probabilities: {
+    positive: number;
+    neutral: number;
+    negative: number;
+  };
+  negativeIndicators: string[];
+}
+
+async function analyzeSentimentDetailed(text: string, LOVABLE_API_KEY: string): Promise<SentimentDetail> {
+  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-2.5-flash',
+      messages: [
+        { 
+          role: 'system', 
+          content: `You are a sentiment analysis expert. Analyze the sentiment of the given text and respond with a JSON object in this exact format:
+{
+  "sentiment": "positive|negative|neutral",
+  "probabilities": {
+    "positive": 0.0-1.0,
+    "neutral": 0.0-1.0,
+    "negative": 0.0-1.0
+  },
+  "negativeIndicators": ["word1", "word2", "phrase1"]
+}
+
+The probabilities should sum to 1.0. Include specific words or phrases that indicate negative sentiment in the negativeIndicators array. If sentiment is not negative, the array can be empty.
+Respond ONLY with valid JSON, no other text.` 
+        },
+        { role: 'user', content: `Analyze this text: "${text}"` }
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Sentiment API error:', response.status, errorText);
+    throw new Error(`Sentiment analysis failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices[0].message.content.trim();
+  
+  // Remove markdown code blocks if present
+  const jsonContent = content.replace(/```json\n?|\n?```/g, '').trim();
+  
+  try {
+    return JSON.parse(jsonContent);
+  } catch (e) {
+    console.error('Failed to parse JSON:', jsonContent);
+    throw new Error('Invalid JSON response from AI');
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -19,68 +80,18 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    // Analyze title sentiment
-    const titleResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { 
-            role: 'system', 
-            content: 'You are a sentiment analysis expert. Analyze the sentiment of the given text and respond with ONLY ONE WORD: "positive", "negative", or "neutral". No explanation, just the sentiment.' 
-          },
-          { role: 'user', content: `Analyze the sentiment of this title: "${title}"` }
-        ],
-      }),
-    });
+    // Analyze title sentiment with details
+    const titleAnalysis = await analyzeSentimentDetailed(title, LOVABLE_API_KEY);
+    
+    // Analyze content sentiment with details
+    const contentAnalysis = await analyzeSentimentDetailed(content, LOVABLE_API_KEY);
 
-    if (!titleResponse.ok) {
-      const errorText = await titleResponse.text();
-      console.error('Title sentiment API error:', titleResponse.status, errorText);
-      throw new Error(`Title sentiment analysis failed: ${titleResponse.status}`);
-    }
-
-    const titleData = await titleResponse.json();
-    const titleSentiment = titleData.choices[0].message.content.trim().toLowerCase();
-
-    // Analyze content sentiment
-    const contentResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { 
-            role: 'system', 
-            content: 'You are a sentiment analysis expert. Analyze the sentiment of the given text and respond with ONLY ONE WORD: "positive", "negative", or "neutral". No explanation, just the sentiment.' 
-          },
-          { role: 'user', content: `Analyze the sentiment of this content: "${content}"` }
-        ],
-      }),
-    });
-
-    if (!contentResponse.ok) {
-      const errorText = await contentResponse.text();
-      console.error('Content sentiment API error:', contentResponse.status, errorText);
-      throw new Error(`Content sentiment analysis failed: ${contentResponse.status}`);
-    }
-
-    const contentData = await contentResponse.json();
-    const contentSentiment = contentData.choices[0].message.content.trim().toLowerCase();
-
-    console.log('Sentiment analysis results:', { titleSentiment, contentSentiment });
+    console.log('Sentiment analysis results:', { titleAnalysis, contentAnalysis });
 
     return new Response(
       JSON.stringify({ 
-        titleSentiment,
-        contentSentiment 
+        title: titleAnalysis,
+        content: contentAnalysis
       }), 
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

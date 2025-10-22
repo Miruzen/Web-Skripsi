@@ -31,18 +31,28 @@ const generateMockData = (timeframe: string) => {
   return data;
 };
 
+interface SentimentAnalysis {
+  sentiment: string;
+  probabilities: {
+    positive: number;
+    neutral: number;
+    negative: number;
+  };
+  negativeIndicators: string[];
+}
+
 const Analysis = () => {
   const [timeframe, setTimeframe] = useState("7D");
   const [data] = useState(() => generateMockData(timeframe));
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [titleSentiment, setTitleSentiment] = useState<string | null>(null);
-  const [contentSentiment, setContentSentiment] = useState<string | null>(null);
+  const [titleInput, setTitleInput] = useState("");
+  const [contentInput, setContentInput] = useState("");
+  const [titleAnalysis, setTitleAnalysis] = useState<SentimentAnalysis | null>(null);
+  const [contentAnalysis, setContentAnalysis] = useState<SentimentAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
 
   const analyzeSentiment = async () => {
-    if (!title.trim() || !content.trim()) {
+    if (!titleInput.trim() || !contentInput.trim()) {
       toast({
         title: "Error",
         description: "Silakan isi judul dan konten terlebih dahulu",
@@ -54,13 +64,13 @@ const Analysis = () => {
     setIsAnalyzing(true);
     try {
       const { data: result, error } = await supabase.functions.invoke('analyze-sentiment', {
-        body: { title, content }
+        body: { title: titleInput, content: contentInput }
       });
 
       if (error) throw error;
 
-      setTitleSentiment(result.titleSentiment);
-      setContentSentiment(result.contentSentiment);
+      setTitleAnalysis(result.title);
+      setContentAnalysis(result.content);
       
       toast({
         title: "Analisis Selesai",
@@ -78,8 +88,7 @@ const Analysis = () => {
     }
   };
 
-  const getSentimentColor = (sentiment: string | null) => {
-    if (!sentiment) return "secondary";
+  const getSentimentColor = (sentiment: string) => {
     switch (sentiment) {
       case "positive":
         return "default";
@@ -92,8 +101,7 @@ const Analysis = () => {
     }
   };
 
-  const getSentimentLabel = (sentiment: string | null) => {
-    if (!sentiment) return "-";
+  const getSentimentLabel = (sentiment: string) => {
     switch (sentiment) {
       case "positive":
         return "Positif";
@@ -104,6 +112,10 @@ const Analysis = () => {
       default:
         return sentiment;
     }
+  };
+
+  const formatPercentage = (value: number) => {
+    return `${(value * 100).toFixed(1)}%`;
   };
   
   // Calculate MAPE (Mean Absolute Percentage Error)
@@ -169,8 +181,8 @@ const Analysis = () => {
                   <Input
                     id="title"
                     placeholder="Masukkan judul untuk analisis..."
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    value={titleInput}
+                    onChange={(e) => setTitleInput(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -178,8 +190,8 @@ const Analysis = () => {
                   <Textarea
                     id="content"
                     placeholder="Masukkan konten untuk analisis..."
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
+                    value={contentInput}
+                    onChange={(e) => setContentInput(e.target.value)}
                     rows={6}
                   />
                 </div>
@@ -193,40 +205,106 @@ const Analysis = () => {
               </div>
 
               <div className="space-y-4">
-                <Card className="bg-muted/50">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Hasil Analisis Judul</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Sentimen:</span>
-                      <Badge variant={getSentimentColor(titleSentiment)}>
-                        {getSentimentLabel(titleSentiment)}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
+                {titleAnalysis && (
+                  <Card className="bg-muted/50">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Hasil Analisis Judul</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Sentimen:</span>
+                        <Badge variant={getSentimentColor(titleAnalysis.sentiment)}>
+                          {getSentimentLabel(titleAnalysis.sentiment)}
+                        </Badge>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Probabilitas:</p>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span>Positif:</span>
+                            <span className="font-medium">{formatPercentage(titleAnalysis.probabilities.positive)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span>Netral:</span>
+                            <span className="font-medium">{formatPercentage(titleAnalysis.probabilities.neutral)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span>Negatif:</span>
+                            <span className="font-medium">{formatPercentage(titleAnalysis.probabilities.negative)}</span>
+                          </div>
+                        </div>
+                      </div>
 
-                <Card className="bg-muted/50">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Hasil Analisis Konten</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Sentimen:</span>
-                      <Badge variant={getSentimentColor(contentSentiment)}>
-                        {getSentimentLabel(contentSentiment)}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
+                      {titleAnalysis.negativeIndicators.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">Indikator Negatif:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {titleAnalysis.negativeIndicators.map((indicator, idx) => (
+                              <Badge key={idx} variant="destructive" className="text-xs">
+                                {indicator}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
 
-                {(titleSentiment || contentSentiment) && (
+                {contentAnalysis && (
+                  <Card className="bg-muted/50">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Hasil Analisis Konten</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Sentimen:</span>
+                        <Badge variant={getSentimentColor(contentAnalysis.sentiment)}>
+                          {getSentimentLabel(contentAnalysis.sentiment)}
+                        </Badge>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Probabilitas:</p>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span>Positif:</span>
+                            <span className="font-medium">{formatPercentage(contentAnalysis.probabilities.positive)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span>Netral:</span>
+                            <span className="font-medium">{formatPercentage(contentAnalysis.probabilities.neutral)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span>Negatif:</span>
+                            <span className="font-medium">{formatPercentage(contentAnalysis.probabilities.negative)}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {contentAnalysis.negativeIndicators.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">Indikator Negatif:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {contentAnalysis.negativeIndicators.map((indicator, idx) => (
+                              <Badge key={idx} variant="destructive" className="text-xs">
+                                {indicator}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {(titleAnalysis || contentAnalysis) && (
                   <div className="pt-4 space-y-2">
                     <p className="text-sm text-muted-foreground">
                       <strong>Catatan:</strong> Analisis sentimen menggunakan AI untuk menentukan 
-                      apakah teks memiliki sentimen positif, negatif, atau netral berdasarkan 
-                      konteks dan pilihan kata.
+                      sentimen berdasarkan konteks. Probabilitas menunjukkan tingkat kepercayaan 
+                      untuk setiap kategori sentimen.
                     </p>
                   </div>
                 )}
