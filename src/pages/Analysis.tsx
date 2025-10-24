@@ -175,8 +175,8 @@ const Analysis = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="space-y-4 lg:col-span-1">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="title" className="text-sm font-semibold">Judul</Label>
                   <Input
@@ -208,11 +208,7 @@ const Analysis = () => {
                 </Button>
               </div>
 
-              <div className="lg:col-span-1">
-                <ScrapeForm />
-              </div>
-
-              <div className="space-y-4 lg:col-span-1">
+              <div className="space-y-4">
                 {titleAnalysis && (
                   <Card className="border-2 shadow-lg bg-gradient-to-br from-card to-card/80">
                     <CardHeader className="pb-3 border-b">
@@ -337,6 +333,9 @@ const Analysis = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Scraper Section - Moved Below Sentiment Analysis */}
+        <ScrapeForm />
 
         {/* Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
