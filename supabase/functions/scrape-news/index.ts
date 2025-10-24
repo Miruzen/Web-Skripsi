@@ -1,8 +1,12 @@
+/// <reference lib="deno.ns" />
 import { DOMParser, Element } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Max-Age': '86400',
+  'Content-Type': 'application/json'
 };
 
 const USER_AGENTS = [
@@ -48,14 +52,13 @@ async function fetchWithRetry(url: string, attempts = 3) {
   throw lastErr;
 }
 
-export default async function (req: Request) {
-  // Handle CORS preflight requests
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "method not allowed" }), { 
+    return new Response(JSON.stringify({ error: "method not allowed" }), {
       status: 405,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
@@ -65,14 +68,14 @@ export default async function (req: Request) {
   try {
     body = await req.json();
   } catch {
-    return new Response(JSON.stringify({ error: "invalid json body" }), { 
+    return new Response(JSON.stringify({ error: "invalid json body" }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 
   const url = (body?.url || "").trim();
-  if (!url) return new Response(JSON.stringify({ error: "url is required" }), { 
+  if (!url) return new Response(JSON.stringify({ error: "url is required" }), {
     status: 400,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' }
   });
@@ -81,7 +84,7 @@ export default async function (req: Request) {
   try {
     parsed = new URL(url);
   } catch {
-    return new Response(JSON.stringify({ error: "invalid url" }), { 
+    return new Response(JSON.stringify({ error: "invalid url" }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
@@ -89,7 +92,7 @@ export default async function (req: Request) {
 
   const allowed = ["investing.com", "dailyforex.com"];
   if (!allowed.some((d) => parsed.hostname.includes(d))) {
-    return new Response(JSON.stringify({ error: "domain not allowed" }), { 
+    return new Response(JSON.stringify({ error: "domain not allowed" }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
@@ -98,7 +101,7 @@ export default async function (req: Request) {
   try {
     const res = await fetchWithRetry(url);
     if (!res.ok) {
-      return new Response(JSON.stringify({ error: `fetch failed: ${res.status}` }), { 
+      return new Response(JSON.stringify({ error: `fetch failed: ${res.status}` }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -107,13 +110,11 @@ export default async function (req: Request) {
     const contentType = (res.headers.get("content-type") || "").toLowerCase();
     const text = await res.text();
 
-    // Try JSON listing first (DailyForex listing endpoints may return JSON)
     const items: Array<{ title: string; link: string; summary?: string }> = [];
     try {
       if (contentType.includes("application/json") || text.trim().startsWith("{") || text.trim().startsWith("[")) {
         try {
           const parsedJson = JSON.parse(text);
-          // common shape used in existing scraper: items array with href/titleText/openDate
           const candidates = parsedJson.items || parsedJson.page?.items || parsedJson;
           if (Array.isArray(candidates)) {
             for (const it of candidates) {
@@ -125,22 +126,15 @@ export default async function (req: Request) {
               items.push({ title: String(title).trim(), link: full });
             }
           }
-        } catch {
-          // ignore JSON parse errors
-        }
+        } catch { }
       }
-    } catch {
-      // ignore
-    }
+    } catch { }
 
-    // If JSON didn't yield results, parse HTML
     if (items.length === 0) {
       const doc = new DOMParser().parseFromString(text, "text/html");
       if (!doc) return new Response(JSON.stringify({ error: "failed parse html" }), { status: 500 });
 
-      // 1) investing.com specific selectors
       if (parsed.hostname.includes("investing.com")) {
-        // try article anchors
         const anchors = Array.from(doc.querySelectorAll('a[data-test="article-title-link"], a[class*="title"], article a'));
         for (const a of anchors) {
           try {
@@ -151,11 +145,8 @@ export default async function (req: Request) {
             if (!full) continue;
             if (!isNewsCandidate(href, title) && !full.includes("/news")) continue;
             items.push({ title, link: full });
-          } catch {
-            // ignore
-          }
+          } catch { }
         }
-        // fallback: article blocks
         if (items.length === 0) {
           const articles = Array.from(doc.querySelectorAll("article"));
           for (const art of articles) {
@@ -166,16 +157,12 @@ export default async function (req: Request) {
               const title = (a.textContent || "").trim();
               const full = normalizeUrl(url, href);
               if (title && full) items.push({ title, link: full });
-            } catch {
-              // ignore
-            }
+            } catch { }
           }
         }
       }
 
-      // 2) dailyforex: check JSON-LD or links on page
       if (parsed.hostname.includes("dailyforex.com")) {
-        // try JSON-LD scripts
         const scripts = Array.from(doc.querySelectorAll('script[type="application/ld+json"]'));
         for (const s of scripts) {
           try {
@@ -193,7 +180,6 @@ export default async function (req: Request) {
                   if (full && title) items.push({ title: String(title).trim(), link: full });
                 }
               }
-              // NewsArticle single object fallback
               if (obj["@type"] === "NewsArticle" || obj["@type"] === "Article") {
                 const link = obj.url || obj.mainEntityOfPage || "";
                 const title = obj.headline || obj.name || "";
@@ -201,12 +187,8 @@ export default async function (req: Request) {
                 if (full && title) items.push({ title: String(title).trim(), link: full, summary: obj.description || "" });
               }
             }
-          } catch {
-            // ignore
-          }
+          } catch { }
         }
-
-        // fallback to anchors if still empty
         if (items.length === 0) {
           const anchors = Array.from(doc.querySelectorAll("a"));
           for (const a of anchors) {
@@ -218,14 +200,11 @@ export default async function (req: Request) {
               const full = normalizeUrl(url, href);
               if (!full) continue;
               items.push({ title, link: full });
-            } catch {
-              // ignore
-            }
+            } catch { }
           }
         }
       }
 
-      // generic fallback for other pages on allowed domains
       if (items.length === 0) {
         const anchors = Array.from(doc.querySelectorAll("a"));
         for (const a of anchors) {
@@ -237,14 +216,11 @@ export default async function (req: Request) {
             const full = normalizeUrl(url, href);
             if (!full) continue;
             items.push({ title, link: full });
-          } catch {
-            // ignore
-          }
+          } catch { }
         }
       }
     }
 
-    // dedupe
     const map = new Map<string, { title: string; link: string; summary?: string }>();
     for (const it of items) {
       if (!it.link) continue;
@@ -259,14 +235,13 @@ export default async function (req: Request) {
         count: unique.length,
         items: unique,
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: corsHeaders }
     );
   } catch (err) {
     console.error('Scrape error:', err);
-    return new Response(JSON.stringify({ error: String(err) }), { 
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({ error: String(err) }),
+      { status: 500, headers: corsHeaders }
+    );
   }
-}
-// ...existing code...
+});
