@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import ScrapeForm from "@/components/ScrapeFrom";
 
 // Mock data for demonstration
 const generateMockData = (timeframe: string) => {
@@ -203,6 +204,10 @@ const Analysis = () => {
                   {isAnalyzing ? "Menganalisis..." : "Analisis Sentimen"}
                 </Button>
               </div>
+
+              <ScrapeForm>
+                
+              </ScrapeForm>
 
               <div className="space-y-4">
                 {titleAnalysis && (
