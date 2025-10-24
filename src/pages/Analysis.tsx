@@ -175,78 +175,84 @@ const Analysis = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="space-y-4 lg:col-span-1">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Judul</Label>
+                  <Label htmlFor="title" className="text-sm font-semibold">Judul</Label>
                   <Input
                     id="title"
                     placeholder="Masukkan judul untuk analisis..."
                     value={titleInput}
                     onChange={(e) => setTitleInput(e.target.value)}
+                    className="transition-all"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="content">Konten</Label>
+                  <Label htmlFor="content" className="text-sm font-semibold">Konten</Label>
                   <Textarea
                     id="content"
                     placeholder="Masukkan konten untuk analisis..."
                     value={contentInput}
                     onChange={(e) => setContentInput(e.target.value)}
-                    rows={6}
+                    rows={8}
+                    className="transition-all resize-none"
                   />
                 </div>
                 <Button 
                   onClick={analyzeSentiment} 
                   disabled={isAnalyzing}
-                  className="w-full"
+                  className="w-full gap-2"
                 >
+                  <Sparkles className="h-4 w-4" />
                   {isAnalyzing ? "Menganalisis..." : "Analisis Sentimen"}
                 </Button>
               </div>
 
-              <ScrapeForm>
-                
-              </ScrapeForm>
+              <div className="lg:col-span-1">
+                <ScrapeForm />
+              </div>
 
-              <div className="space-y-4">
+              <div className="space-y-4 lg:col-span-1">
                 {titleAnalysis && (
-                  <Card className="bg-muted/50">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base">Hasil Analisis Judul</CardTitle>
+                  <Card className="border-2 shadow-lg bg-gradient-to-br from-card to-card/80">
+                    <CardHeader className="pb-3 border-b">
+                      <CardTitle className="text-base font-semibold flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        Hasil Analisis Judul
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Sentimen:</span>
-                        <Badge variant={getSentimentColor(titleAnalysis.sentiment)}>
+                    <CardContent className="space-y-4 pt-4">
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                        <span className="text-sm font-medium text-muted-foreground">Sentimen:</span>
+                        <Badge variant={getSentimentColor(titleAnalysis.sentiment)} className="px-3 py-1">
                           {getSentimentLabel(titleAnalysis.sentiment)}
                         </Badge>
                       </div>
                       
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">Probabilitas:</p>
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-sm">
-                            <span>Positif:</span>
-                            <span className="font-medium">{formatPercentage(titleAnalysis.probabilities.positive)}</span>
+                      <div className="space-y-3 p-3 rounded-lg bg-muted/20">
+                        <p className="text-sm font-semibold text-foreground">Probabilitas:</p>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Positif:</span>
+                            <span className="font-bold text-success">{formatPercentage(titleAnalysis.probabilities.positive)}</span>
                           </div>
-                          <div className="flex justify-between text-sm">
-                            <span>Netral:</span>
-                            <span className="font-medium">{formatPercentage(titleAnalysis.probabilities.neutral)}</span>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Netral:</span>
+                            <span className="font-bold">{formatPercentage(titleAnalysis.probabilities.neutral)}</span>
                           </div>
-                          <div className="flex justify-between text-sm">
-                            <span>Negatif:</span>
-                            <span className="font-medium">{formatPercentage(titleAnalysis.probabilities.negative)}</span>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Negatif:</span>
+                            <span className="font-bold text-destructive">{formatPercentage(titleAnalysis.probabilities.negative)}</span>
                           </div>
                         </div>
                       </div>
 
                       {titleAnalysis.negativeIndicators.length > 0 && (
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium">Indikator Negatif:</p>
+                        <div className="space-y-2 p-3 rounded-lg bg-destructive/5 border border-destructive/20">
+                          <p className="text-sm font-semibold text-destructive">Indikator Negatif:</p>
                           <div className="flex flex-wrap gap-2">
                             {titleAnalysis.negativeIndicators.map((indicator, idx) => (
-                              <Badge key={idx} variant="destructive" className="text-xs">
+                              <Badge key={idx} variant="destructive" className="text-xs font-medium">
                                 {indicator}
                               </Badge>
                             ))}
@@ -258,42 +264,45 @@ const Analysis = () => {
                 )}
 
                 {contentAnalysis && (
-                  <Card className="bg-muted/50">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base">Hasil Analisis Konten</CardTitle>
+                  <Card className="border-2 shadow-lg bg-gradient-to-br from-card to-card/80">
+                    <CardHeader className="pb-3 border-b">
+                      <CardTitle className="text-base font-semibold flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        Hasil Analisis Konten
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Sentimen:</span>
-                        <Badge variant={getSentimentColor(contentAnalysis.sentiment)}>
+                    <CardContent className="space-y-4 pt-4">
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                        <span className="text-sm font-medium text-muted-foreground">Sentimen:</span>
+                        <Badge variant={getSentimentColor(contentAnalysis.sentiment)} className="px-3 py-1">
                           {getSentimentLabel(contentAnalysis.sentiment)}
                         </Badge>
                       </div>
                       
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">Probabilitas:</p>
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-sm">
-                            <span>Positif:</span>
-                            <span className="font-medium">{formatPercentage(contentAnalysis.probabilities.positive)}</span>
+                      <div className="space-y-3 p-3 rounded-lg bg-muted/20">
+                        <p className="text-sm font-semibold text-foreground">Probabilitas:</p>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Positif:</span>
+                            <span className="font-bold text-success">{formatPercentage(contentAnalysis.probabilities.positive)}</span>
                           </div>
-                          <div className="flex justify-between text-sm">
-                            <span>Netral:</span>
-                            <span className="font-medium">{formatPercentage(contentAnalysis.probabilities.neutral)}</span>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Netral:</span>
+                            <span className="font-bold">{formatPercentage(contentAnalysis.probabilities.neutral)}</span>
                           </div>
-                          <div className="flex justify-between text-sm">
-                            <span>Negatif:</span>
-                            <span className="font-medium">{formatPercentage(contentAnalysis.probabilities.negative)}</span>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Negatif:</span>
+                            <span className="font-bold text-destructive">{formatPercentage(contentAnalysis.probabilities.negative)}</span>
                           </div>
                         </div>
                       </div>
 
                       {contentAnalysis.negativeIndicators.length > 0 && (
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium">Indikator Negatif:</p>
+                        <div className="space-y-2 p-3 rounded-lg bg-destructive/5 border border-destructive/20">
+                          <p className="text-sm font-semibold text-destructive">Indikator Negatif:</p>
                           <div className="flex flex-wrap gap-2">
                             {contentAnalysis.negativeIndicators.map((indicator, idx) => (
-                              <Badge key={idx} variant="destructive" className="text-xs">
+                              <Badge key={idx} variant="destructive" className="text-xs font-medium">
                                 {indicator}
                               </Badge>
                             ))}
@@ -304,9 +313,20 @@ const Analysis = () => {
                   </Card>
                 )}
 
+                {!titleAnalysis && !contentAnalysis && (
+                  <div className="h-full flex items-center justify-center p-8">
+                    <div className="text-center space-y-2">
+                      <Sparkles className="h-12 w-12 mx-auto text-muted-foreground/40" />
+                      <p className="text-sm text-muted-foreground">
+                        Hasil analisis akan muncul di sini
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
                 {(titleAnalysis || contentAnalysis) && (
-                  <div className="pt-4 space-y-2">
-                    <p className="text-sm text-muted-foreground">
+                  <div className="pt-2">
+                    <p className="text-xs text-muted-foreground italic p-3 rounded-lg bg-muted/20 border border-border/50">
                       <strong>Catatan:</strong> Analisis sentimen menggunakan AI untuk menentukan 
                       sentimen berdasarkan konteks. Probabilitas menunjukkan tingkat kepercayaan 
                       untuk setiap kategori sentimen.

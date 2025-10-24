@@ -1,5 +1,4 @@
-// ...existing code...
-import { DOMParser } from "https://deno.land/x/deno_dom@0.1.36/deno-dom-wasm.ts";
+import { DOMParser, Element } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
 
 const USER_AGENTS = [
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
@@ -118,8 +117,8 @@ export default async function (req: Request) {
         const anchors = Array.from(doc.querySelectorAll('a[data-test="article-title-link"], a[class*="title"], article a'));
         for (const a of anchors) {
           try {
-            const href = (a as HTMLAnchorElement).getAttribute("href");
-            const title = ((a as HTMLAnchorElement).textContent || "").trim();
+            const href = (a as Element).getAttribute("href");
+            const title = ((a as Element).textContent || "").trim();
             if (!title) continue;
             const full = normalizeUrl(url, href);
             if (!full) continue;
@@ -134,7 +133,7 @@ export default async function (req: Request) {
           const articles = Array.from(doc.querySelectorAll("article"));
           for (const art of articles) {
             try {
-              const a = art.querySelector('a[data-test="article-title-link"]') || art.querySelector("a");
+              const a = (art as Element).querySelector('a[data-test="article-title-link"]') || (art as Element).querySelector("a");
               if (!a) continue;
               const href = a.getAttribute("href");
               const title = (a.textContent || "").trim();
@@ -153,7 +152,7 @@ export default async function (req: Request) {
         const scripts = Array.from(doc.querySelectorAll('script[type="application/ld+json"]'));
         for (const s of scripts) {
           try {
-            const txt = s.textContent || "";
+            const txt = (s as Element).textContent || "";
             if (!txt) continue;
             const parsedJson = JSON.parse(txt);
             const arr = Array.isArray(parsedJson) ? parsedJson : [parsedJson];
@@ -185,8 +184,8 @@ export default async function (req: Request) {
           const anchors = Array.from(doc.querySelectorAll("a"));
           for (const a of anchors) {
             try {
-              const href = a.getAttribute("href");
-              const title = (a.textContent || "").trim();
+              const href = (a as Element).getAttribute("href");
+              const title = ((a as Element).textContent || "").trim();
               if (!title) continue;
               if (!isNewsCandidate(href, title)) continue;
               const full = normalizeUrl(url, href);
@@ -204,8 +203,8 @@ export default async function (req: Request) {
         const anchors = Array.from(doc.querySelectorAll("a"));
         for (const a of anchors) {
           try {
-            const href = a.getAttribute("href");
-            const title = (a.textContent || "").trim();
+            const href = (a as Element).getAttribute("href");
+            const title = ((a as Element).textContent || "").trim();
             if (!title) continue;
             if (!isNewsCandidate(href, title)) continue;
             const full = normalizeUrl(url, href);
