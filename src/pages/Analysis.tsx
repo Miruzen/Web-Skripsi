@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast"; // Pastikan path ini benar untuk useToast
 import ScrapeForm from "@/components/ScrapeFrom";
+import HistoricalDataForm from "@/components/HistoricalDataForm";
 
 const generateMockData = (timeframe: string) => {
   const dataPoints = timeframe === "1D" ? 24 : timeframe === "7D" ? 7 : timeframe === "1M" ? 30 : 90;
@@ -249,6 +250,10 @@ const Analysis = () => {
       </div>
 
       <div className="container mx-auto px-6 py-8 space-y-8">
+        <ScrapeForm />
+
+        <HistoricalDataForm />
+
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -329,8 +334,6 @@ const Analysis = () => {
             </div>
           </CardContent>
         </Card>
-
-        <ScrapeForm />
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="shadow-card">
