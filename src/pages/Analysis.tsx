@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast"; // Pastikan path ini benar untuk useToast
 import ScrapeForm from "@/components/ScrapeFrom";
 import HistoricalDataForm from "@/components/HistoricalDataForm";
+import { PredictionCard } from "@/components/PredictionCard";
 
 const generateMockData = (timeframe: string) => {
   const dataPoints = timeframe === "1D" ? 24 : timeframe === "7D" ? 7 : timeframe === "1M" ? 30 : 90;
@@ -253,6 +254,8 @@ const Analysis = () => {
         <ScrapeForm />
 
         <HistoricalDataForm />
+
+        <PredictionCard />
 
         <Card className="shadow-card">
           <CardHeader>

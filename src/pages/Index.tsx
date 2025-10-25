@@ -1,5 +1,5 @@
 import LiveRate from "@/components/LiveRate";
-import PredictionCard from "@/components/PredictionCard";
+import { PredictionCard } from "@/components/PredictionCard";
 import NewsCard from "@/components/NewsCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

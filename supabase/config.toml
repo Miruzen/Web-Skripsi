@@ -2,3 +2,9 @@ project_id = "ifvvxishlzlritdcjucf"
 
 [functions.analyze-sentiment]
 verify_jwt = false
+
+[functions.scrape-news]
+verify_jwt = false
+
+[functions.lstm-prediction]
+verify_jwt = false
