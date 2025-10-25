@@ -9,38 +9,52 @@ import { Globe, Download, Loader2, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+// Interface ScrapeResult dari Kode 1 untuk type safety yang lebih baik
+interface ScrapeResult {
+  url: string;
+  domain: string;
+  count: number;
+  items: Array<{
+    title: string;
+    link: string;
+    content?: string; // Menjaga kemampuan untuk menampilkan konten penuh
+    author?: string;
+    date?: string;
+  }>;
+}
+
 export default function ScrapeForm() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any | null>(null);
+  const [result, setResult] = useState<ScrapeResult | null>(null); // Menggunakan ScrapeResult
   const { toast } = useToast();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setResult(null);
     if (!url) return;
-    
+
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("scrape-news", { 
-        body: { url } 
+      // Panggil fungsi Supabase seperti di Kode 1
+      const { data, error } = await supabase.functions.invoke<ScrapeResult>("scrape-news", {
+        body: { url }
       });
 
       if (error) {
-        toast({
-          title: "Error",
-          description: error.message || "Gagal scraping berita",
-          variant: "destructive",
-        });
-        return;
+        throw error; // Melemparkan error untuk ditangkap di blok catch
       }
 
       setResult(data);
+      // Logika toast dari Kode 1
       toast({
         title: "Berhasil!",
-        description: `${data.count} berita berhasil di-scrape`,
+        description: data.items[0]?.content
+          ? "Artikel berhasil di-scrape"
+          : `${data.count} berita berhasil di-scrape`,
       });
     } catch (err: any) {
+      console.error("Scrape error:", err);
       toast({
         title: "Error",
         description: err?.message || "Terjadi kesalahan saat scraping",
@@ -60,7 +74,7 @@ export default function ScrapeForm() {
     a.download = `scrape-${result.domain}-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(u);
-    
+
     toast({
       title: "Download dimulai",
       description: "File JSON berhasil diunduh",
@@ -91,11 +105,11 @@ export default function ScrapeForm() {
               Mendukung: investing.com, dailyforex.com
             </p>
           </div>
-          
+
           <div className="flex gap-2">
-            <Button 
-              type="submit" 
-              disabled={loading || !url}
+            <Button
+              type="submit"
+              disabled={loading || !url} // Validasi dari Kode 2
               className="flex-1 gap-2"
             >
               {loading ? (
@@ -110,10 +124,10 @@ export default function ScrapeForm() {
                 </>
               )}
             </Button>
-            <Button 
-              type="button" 
-              onClick={downloadJson} 
-              disabled={!result}
+            <Button
+              type="button"
+              onClick={downloadJson}
+              disabled={!result} // Validasi dari Kode 2
               variant="outline"
               className="gap-2"
             >
@@ -137,25 +151,42 @@ export default function ScrapeForm() {
 
             <div className="space-y-2">
               <Label className="text-sm font-semibold">Hasil Scraping</Label>
-              <ScrollArea className="h-64 rounded-lg border bg-muted/20 p-4">
-                <ul className="space-y-2">
-                  {result.items.map((item: any, i: number) => (
-                    <li key={i} className="group">
-                      <a 
-                        href={item.link} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        className="flex items-start gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors"
-                      >
-                        <ExternalLink className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
-                        <span className="text-sm text-foreground group-hover:text-primary transition-colors">
-                          {item.title}
-                        </span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </ScrollArea>
+              {result.items[0]?.content ? (
+                // Tampilan konten artikel penuh dari Kode 1
+                <ScrollArea className="h-64 rounded-lg border bg-muted/20 p-4">
+                  <div className="space-y-2">
+                    <h3 className="font-bold text-lg">{result.items[0].title}</h3>
+                    {result.items[0].author && (
+                      <div className="text-sm text-muted-foreground">Author: {result.items[0].author}</div>
+                    )}
+                    {result.items[0].date && (
+                      <div className="text-sm text-muted-foreground">Date: {result.items[0].date}</div>
+                    )}
+                    <p className="text-sm whitespace-pre-wrap mt-2">{result.items[0].content}</p>
+                  </div>
+                </ScrollArea>
+              ) : (
+                // Tampilan daftar link berita dari Kode 2
+                <ScrollArea className="h-64 rounded-lg border bg-muted/20 p-4">
+                  <ul className="space-y-2">
+                    {result.items.map((item, i) => (
+                      <li key={i} className="group">
+                        <a
+                          href={item.link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-start gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors"
+                        >
+                          <ExternalLink className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
+                          <span className="text-sm text-foreground group-hover:text-primary transition-colors">
+                            {item.title}
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </ScrollArea>
+              )}
             </div>
           </div>
         )}

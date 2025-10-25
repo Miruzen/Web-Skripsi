@@ -1,62 +1,76 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { Calendar, TrendingUp, Target, BarChart3, Sparkles } from "lucide-react";
+import { Calendar, TrendingUp, Target, BarChart3, Sparkles, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast"; // Pastikan path ini benar untuk useToast
 import ScrapeForm from "@/components/ScrapeFrom";
 
-// Mock data for demonstration
 const generateMockData = (timeframe: string) => {
   const dataPoints = timeframe === "1D" ? 24 : timeframe === "7D" ? 7 : timeframe === "1M" ? 30 : 90;
   const data = [];
-  
+
   for (let i = 0; i < dataPoints; i++) {
     const baseRate = 1.0850;
     const actual = baseRate + (Math.random() - 0.5) * 0.02;
     const predicted = actual + (Math.random() - 0.5) * 0.005;
-    
+
     data.push({
       time: timeframe === "1D" ? `${i}:00` : `Day ${i + 1}`,
       actual: parseFloat(actual.toFixed(4)),
       predicted: parseFloat(predicted.toFixed(4)),
     });
   }
-  
+
   return data;
 };
 
-interface SentimentAnalysis {
+// Interface SentimentAnalysis yang diperbarui sesuai dengan output fungsi Supabase Anda
+interface SentimentAnalysisResult {
   sentiment: string;
   probabilities: {
     positive: number;
     neutral: number;
     negative: number;
   };
-  negativeIndicators: string[];
+  // `negativeIndicators` tidak ada di skrip kedua, jadi kita hapus atau jadikan opsional
+  // negativeIndicators?: string[]; // Jadikan opsional atau hapus jika tidak digunakan
+  model?: string; // Menambahkan model dari skrip kedua
+}
+
+interface AnalysisResponse {
+  title: SentimentAnalysisResult | null;
+  content: SentimentAnalysisResult | null;
+  errors?: string[];
 }
 
 const Analysis = () => {
   const [timeframe, setTimeframe] = useState("7D");
-  const [data] = useState(() => generateMockData(timeframe));
+  const [chartData, setChartData] = useState(() => generateMockData(timeframe)); // Ganti nama `data` menjadi `chartData`
+  
+  // State untuk Analisis Sentimen (dari skrip kedua)
   const [titleInput, setTitleInput] = useState("");
   const [contentInput, setContentInput] = useState("");
-  const [titleAnalysis, setTitleAnalysis] = useState<SentimentAnalysis | null>(null);
-  const [contentAnalysis, setContentAnalysis] = useState<SentimentAnalysis | null>(null);
+  const [sentimentResult, setSentimentResult] = useState<AnalysisResponse | null>(null); // Menggabungkan hasil title & content
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
   const { toast } = useToast();
 
+  useEffect(() => {
+    setChartData(generateMockData(timeframe));
+  }, [timeframe]);
+
   const analyzeSentiment = async () => {
-    if (!titleInput.trim() || !contentInput.trim()) {
+    if (!titleInput.trim() && !contentInput.trim()) {
       toast({
-        title: "Error",
-        description: "Silakan isi judul dan konten terlebih dahulu",
+        title: "Input Dibutuhkan",
+        description: "Silakan masukkan judul atau konten untuk dianalisis.",
         variant: "destructive",
       });
       return;
@@ -64,24 +78,36 @@ const Analysis = () => {
 
     setIsAnalyzing(true);
     try {
-      const { data: result, error } = await supabase.functions.invoke('analyze-sentiment', {
-        body: { title: titleInput, content: contentInput }
-      });
+      const { data, error } = await supabase.functions.invoke<AnalysisResponse>(
+        'analyze-sentiment',
+        {
+          body: { title: titleInput, content: contentInput }
+        }
+      );
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      setTitleAnalysis(result.title);
-      setContentAnalysis(result.content);
-      
-      toast({
-        title: "Analisis Selesai",
-        description: "Sentimen telah berhasil dianalisis",
-      });
-    } catch (error) {
+      setSentimentResult(data);
+
+      if (data?.errors?.length) {
+        toast({
+          title: "Peringatan Analisis",
+          description: data.errors.join(". "),
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Analisis Selesai",
+          description: "Sentimen telah berhasil dianalisis.",
+        });
+      }
+    } catch (error: any) {
       console.error('Sentiment analysis error:', error);
       toast({
         title: "Error",
-        description: "Gagal menganalisis sentimen. Silakan coba lagi.",
+        description: error.message || "Gagal menganalisis sentimen. Silakan coba lagi.",
         variant: "destructive",
       });
     } finally {
@@ -89,20 +115,20 @@ const Analysis = () => {
     }
   };
 
-  const getSentimentColor = (sentiment: string) => {
+  const getSentimentColor = (sentiment: string | undefined) => {
     switch (sentiment) {
       case "positive":
-        return "default";
+        return "text-green-600";
       case "negative":
-        return "destructive";
+        return "text-red-600";
       case "neutral":
-        return "secondary";
+        return "text-gray-600";
       default:
-        return "secondary";
+        return "text-gray-500";
     }
   };
 
-  const getSentimentLabel = (sentiment: string) => {
+  const getSentimentLabel = (sentiment: string | undefined) => {
     switch (sentiment) {
       case "positive":
         return "Positif";
@@ -111,27 +137,84 @@ const Analysis = () => {
       case "neutral":
         return "Netral";
       default:
-        return sentiment;
+        return "Tidak Diketahui";
     }
   };
 
   const formatPercentage = (value: number) => {
     return `${(value * 100).toFixed(1)}%`;
   };
-  
-  // Calculate MAPE (Mean Absolute Percentage Error)
-  const mape = data.reduce((acc, point) => {
+
+  const mape = chartData.reduce((acc, point) => {
     return acc + Math.abs((point.actual - point.predicted) / point.actual);
-  }, 0) / data.length * 100;
+  }, 0) / chartData.length * 100;
 
   const timeframes = [
     { value: "1D", label: "Harian" },
+    { value: "7D", label: "Mingguan" }, // Menambahkan 7D
     { value: "1M", label: "Bulanan" },
   ];
 
+  const renderProbabilities = (analysis: SentimentAnalysisResult) => {
+    if (!analysis?.probabilities) return null;
+
+    const { positive, neutral, negative } = analysis.probabilities;
+    return (
+      <div className="grid grid-cols-3 gap-2 text-sm mt-2">
+        <div className="flex flex-col items-center p-2 rounded-md bg-green-50/50">
+          <span className="font-semibold text-green-700">Positif</span>
+          <span>{formatPercentage(positive)}</span>
+        </div>
+        <div className="flex flex-col items-center p-2 rounded-md bg-gray-50/50">
+          <span className="font-semibold text-gray-700">Netral</span>
+          <span>{formatPercentage(neutral)}</span>
+        </div>
+        <div className="flex flex-col items-center p-2 rounded-md bg-red-50/50">
+          <span className="font-semibold text-red-700">Negatif</span>
+          <span>{formatPercentage(negative)}</span>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSentimentResultCard = (
+    type: 'Judul' | 'Konten',
+    analysis: SentimentAnalysisResult | null
+  ) => {
+    if (!analysis) return null;
+
+    return (
+      <Card className="border-2 shadow-lg bg-gradient-to-br from-card to-card/80">
+        <CardHeader className="pb-3 border-b">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            Hasil Analisis {type} ({analysis.model || 'Model Tidak Diketahui'})
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-4">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+            <span className="text-sm font-medium text-muted-foreground">Sentimen:</span>
+            <Badge variant={
+                analysis.sentiment === "positive" ? "default" :
+                analysis.sentiment === "negative" ? "destructive" :
+                "secondary"
+              } className="px-3 py-1">
+              {getSentimentLabel(analysis.sentiment)}
+            </Badge>
+          </div>
+
+          <div className="space-y-3 p-3 rounded-lg bg-muted/20">
+            <p className="text-sm font-semibold text-foreground">Probabilitas:</p>
+            {renderProbabilities(analysis)}
+          </div>
+          {/* Karena negativeIndicators tidak ada di skrip kedua, bagian ini dihapus */}
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="border-b border-border bg-gradient-card">
         <div className="container mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
@@ -166,7 +249,6 @@ const Analysis = () => {
       </div>
 
       <div className="container mx-auto px-6 py-8 space-y-8">
-        {/* Sentiment Analysis Section */}
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -185,6 +267,7 @@ const Analysis = () => {
                     value={titleInput}
                     onChange={(e) => setTitleInput(e.target.value)}
                     className="transition-all"
+                    disabled={isAnalyzing}
                   />
                 </div>
                 <div className="space-y-2">
@@ -196,120 +279,33 @@ const Analysis = () => {
                     onChange={(e) => setContentInput(e.target.value)}
                     rows={8}
                     className="transition-all resize-none"
+                    disabled={isAnalyzing}
                   />
                 </div>
                 <Button 
                   onClick={analyzeSentiment} 
-                  disabled={isAnalyzing}
+                  disabled={isAnalyzing || (!titleInput.trim() && !contentInput.trim())}
                   className="w-full gap-2"
                 >
-                  <Sparkles className="h-4 w-4" />
-                  {isAnalyzing ? "Menganalisis..." : "Analisis Sentimen"}
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Menganalisis...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      Analisis Sentimen
+                    </>
+                  )}
                 </Button>
               </div>
 
               <div className="space-y-4">
-                {titleAnalysis && (
-                  <Card className="border-2 shadow-lg bg-gradient-to-br from-card to-card/80">
-                    <CardHeader className="pb-3 border-b">
-                      <CardTitle className="text-base font-semibold flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-primary" />
-                        Hasil Analisis Judul
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4 pt-4">
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                        <span className="text-sm font-medium text-muted-foreground">Sentimen:</span>
-                        <Badge variant={getSentimentColor(titleAnalysis.sentiment)} className="px-3 py-1">
-                          {getSentimentLabel(titleAnalysis.sentiment)}
-                        </Badge>
-                      </div>
-                      
-                      <div className="space-y-3 p-3 rounded-lg bg-muted/20">
-                        <p className="text-sm font-semibold text-foreground">Probabilitas:</p>
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-muted-foreground">Positif:</span>
-                            <span className="font-bold text-success">{formatPercentage(titleAnalysis.probabilities.positive)}</span>
-                          </div>
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-muted-foreground">Netral:</span>
-                            <span className="font-bold">{formatPercentage(titleAnalysis.probabilities.neutral)}</span>
-                          </div>
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-muted-foreground">Negatif:</span>
-                            <span className="font-bold text-destructive">{formatPercentage(titleAnalysis.probabilities.negative)}</span>
-                          </div>
-                        </div>
-                      </div>
+                {sentimentResult?.title && renderSentimentResultCard('Judul', sentimentResult.title)}
+                {sentimentResult?.content && renderSentimentResultCard('Konten', sentimentResult.content)}
 
-                      {titleAnalysis.negativeIndicators.length > 0 && (
-                        <div className="space-y-2 p-3 rounded-lg bg-destructive/5 border border-destructive/20">
-                          <p className="text-sm font-semibold text-destructive">Indikator Negatif:</p>
-                          <div className="flex flex-wrap gap-2">
-                            {titleAnalysis.negativeIndicators.map((indicator, idx) => (
-                              <Badge key={idx} variant="destructive" className="text-xs font-medium">
-                                {indicator}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-
-                {contentAnalysis && (
-                  <Card className="border-2 shadow-lg bg-gradient-to-br from-card to-card/80">
-                    <CardHeader className="pb-3 border-b">
-                      <CardTitle className="text-base font-semibold flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-primary" />
-                        Hasil Analisis Konten
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4 pt-4">
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                        <span className="text-sm font-medium text-muted-foreground">Sentimen:</span>
-                        <Badge variant={getSentimentColor(contentAnalysis.sentiment)} className="px-3 py-1">
-                          {getSentimentLabel(contentAnalysis.sentiment)}
-                        </Badge>
-                      </div>
-                      
-                      <div className="space-y-3 p-3 rounded-lg bg-muted/20">
-                        <p className="text-sm font-semibold text-foreground">Probabilitas:</p>
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-muted-foreground">Positif:</span>
-                            <span className="font-bold text-success">{formatPercentage(contentAnalysis.probabilities.positive)}</span>
-                          </div>
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-muted-foreground">Netral:</span>
-                            <span className="font-bold">{formatPercentage(contentAnalysis.probabilities.neutral)}</span>
-                          </div>
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-muted-foreground">Negatif:</span>
-                            <span className="font-bold text-destructive">{formatPercentage(contentAnalysis.probabilities.negative)}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {contentAnalysis.negativeIndicators.length > 0 && (
-                        <div className="space-y-2 p-3 rounded-lg bg-destructive/5 border border-destructive/20">
-                          <p className="text-sm font-semibold text-destructive">Indikator Negatif:</p>
-                          <div className="flex flex-wrap gap-2">
-                            {contentAnalysis.negativeIndicators.map((indicator, idx) => (
-                              <Badge key={idx} variant="destructive" className="text-xs font-medium">
-                                {indicator}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-
-                {!titleAnalysis && !contentAnalysis && (
+                {!sentimentResult && (
                   <div className="h-full flex items-center justify-center p-8">
                     <div className="text-center space-y-2">
                       <Sparkles className="h-12 w-12 mx-auto text-muted-foreground/40" />
@@ -320,7 +316,7 @@ const Analysis = () => {
                   </div>
                 )}
                 
-                {(titleAnalysis || contentAnalysis) && (
+                {(sentimentResult?.title || sentimentResult?.content) && (
                   <div className="pt-2">
                     <p className="text-xs text-muted-foreground italic p-3 rounded-lg bg-muted/20 border border-border/50">
                       <strong>Catatan:</strong> Analisis sentimen menggunakan AI untuk menentukan 
@@ -334,10 +330,8 @@ const Analysis = () => {
           </CardContent>
         </Card>
 
-        {/* Scraper Section - Moved Below Sentiment Analysis */}
         <ScrapeForm />
 
-        {/* Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="shadow-card">
             <CardHeader className="pb-3">
@@ -380,7 +374,7 @@ const Analysis = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">
-                {data.length}
+                {chartData.length}
               </div>
               <div className="text-sm text-muted-foreground">
                 Titik data
@@ -405,7 +399,6 @@ const Analysis = () => {
           </Card>
         </div>
 
-        {/* Main Chart */}
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -416,7 +409,7 @@ const Analysis = () => {
           <CardContent>
             <div className="h-96">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data}>
+                <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
                     dataKey="time" 
@@ -459,7 +452,6 @@ const Analysis = () => {
           </CardContent>
         </Card>
 
-        {/* Additional Analysis */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="shadow-card">
             <CardHeader>

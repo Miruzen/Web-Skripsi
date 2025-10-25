@@ -34,19 +34,42 @@ function isNewsCandidate(href: string | null, text: string) {
 }
 
 async function fetchWithRetry(url: string, attempts = 3) {
+  const headers = {
+    "User-Agent": USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)],
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Accept-Encoding": "gzip, deflate, br",
+    "DNT": "1",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Cache-Control": "max-age=0"
+  };
+
   let lastErr: unknown = null;
   for (let i = 0; i < attempts; i++) {
     try {
-      const res = await fetch(url, {
-        headers: {
-          "User-Agent": USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)],
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        },
-      });
+      // Add random delay between attempts
+      if (i > 0) {
+        await new Promise(r => setTimeout(r, 1000 + Math.random() * 2000));
+      }
+
+      const res = await fetch(url, { headers });
+      if (res.ok) return res;
+      
+      // Handle specific status codes
+      if (res.status === 403 || res.status === 429) {
+        console.log(`Rate limited (${res.status}), retrying...`);
+        continue;
+      }
+      
       return res;
     } catch (err) {
       lastErr = err;
-      await new Promise((r) => setTimeout(r, 500 + Math.random() * 800));
+      await new Promise(r => setTimeout(r, 500 + Math.random() * 800));
     }
   }
   throw lastErr;
@@ -110,7 +133,7 @@ Deno.serve(async (req) => {
     const contentType = (res.headers.get("content-type") || "").toLowerCase();
     const text = await res.text();
 
-    const items: Array<{ title: string; link: string; summary?: string }> = [];
+    const items: Array<{ title: string; link: string; summary?: string; content?: string; author?: string; date?: string }> = [];
     try {
       if (contentType.includes("application/json") || text.trim().startsWith("{") || text.trim().startsWith("[")) {
         try {
@@ -220,8 +243,99 @@ Deno.serve(async (req) => {
         }
       }
     }
+      if (items.length === 0 && (url.includes("/news/") || url.includes("/article/"))) {
+    // Single article page
+    const doc = new DOMParser().parseFromString(text, "text/html");
+    if (!doc) {
+      return new Response(
+        JSON.stringify({ error: "failed parse html" }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
 
-    const map = new Map<string, { title: string; link: string; summary?: string }>();
+    const { content, author, date } = await extractArticleContent(doc, parsed.hostname);
+    
+    // Get title from meta tags if not found in content
+    const titleMeta = doc.querySelector('meta[property="og:title"]');
+    const title = titleMeta?.getAttribute("content") || "";
+
+    if (content) {
+      items.push({
+        title,
+        link: url,
+        content,
+        author,
+        date
+      });
+    }
+  }
+
+    async function extractArticleContent(doc: Document, domain: string) {
+  let content = "";
+  let author = "";
+  let date = "";
+
+  try {
+    if (domain.includes("investing.com")) {
+      // Investing.com selectors based on your Python scraper
+      const articleDiv = doc.querySelector("div#article");
+      if (articleDiv) {
+        const paragraphs = articleDiv.querySelectorAll("p");
+        const contentParts = [];
+        for (const p of paragraphs) {
+          const text = p.textContent?.trim() || "";
+          if (text && !text.toLowerCase().includes("advertisement")) {
+            contentParts.push(text);
+          }
+        }
+        content = contentParts.join(" ");
+      }
+
+      // Extract author and date
+      const authorEl = doc.querySelector('a[data-test="article-provider-link"]');
+      const dateEl = doc.querySelector('time[data-test="article-publish-date"]');
+      
+      author = authorEl?.textContent?.trim() || "";
+      date = dateEl?.getAttribute("datetime") || "";
+
+    } else if (domain.includes("dailyforex.com")) {
+      // DailyForex selectors
+      const contentDiv = doc.querySelector("div.content-body.article-content");
+      if (contentDiv) {
+        const paragraphs = contentDiv.querySelectorAll("p");
+        const contentParts = [];
+        for (const p of paragraphs) {
+          const text = p.textContent?.trim() || "";
+          if (text) {
+            contentParts.push(text);
+          }
+        }
+        content = contentParts.join(" ");
+      }
+
+      // Extract author and date from JSON-LD if available
+      const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+      for (const script of scripts) {
+        try {
+          const data = JSON.parse(script.textContent || "");
+          if (data["@type"] === "NewsArticle") {
+            author = data.author?.name || "";
+            date = data.datePublished || "";
+            break;
+          }
+        } catch {
+          // Ignore JSON parse errors
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error extracting content:", error);
+  }
+
+  return { content, author, date };
+}
+
+    const map = new Map<string, { title: string; link: string; summary?: string; content?: string; author?: string; date?: string }>();
     for (const it of items) {
       if (!it.link) continue;
       if (!map.has(it.link)) map.set(it.link, { title: it.title, link: it.link, summary: it.summary });
