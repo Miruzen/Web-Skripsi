@@ -62,6 +62,9 @@ const Analysis = () => {
   const [sentimentResult, setSentimentResult] = useState<AnalysisResponse | null>(null); // Menggabungkan hasil title & content
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   
+  // State untuk Historical Data
+  const [historicalData, setHistoricalData] = useState<{ close: number; EMA20: number; EMA50: number } | null>(null);
+  
   const { toast } = useToast();
 
   useEffect(() => {
@@ -253,9 +256,9 @@ const Analysis = () => {
       <div className="container mx-auto px-6 py-8 space-y-8">
         <ScrapeForm />
 
-        <HistoricalDataForm />
+        <HistoricalDataForm onDataFetched={setHistoricalData} />
 
-        <PredictionCard />
+        <PredictionCard sentimentData={sentimentResult} historicalData={historicalData} />
 
         <Card className="shadow-card">
           <CardHeader>

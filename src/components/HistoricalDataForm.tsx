@@ -27,7 +27,11 @@ interface HistoricalData {
   trend_analysis: TrendAnalysis;
 }
 
-const HistoricalDataForm = () => {
+interface HistoricalDataFormProps {
+  onDataFetched?: (data: { close: number; EMA20: number; EMA50: number }) => void;
+}
+
+const HistoricalDataForm = ({ onDataFetched }: HistoricalDataFormProps) => {
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [loading, setLoading] = useState(false);
@@ -72,6 +76,15 @@ const HistoricalDataForm = () => {
 
       const result = await response.json();
       setData(result);
+
+      // Call the callback with the fetched data
+      if (onDataFetched) {
+        onDataFetched({
+          close: result.close,
+          EMA20: result.EMA20,
+          EMA50: result.EMA50,
+        });
+      }
 
       toast({
         title: "Data Berhasil Diambil",

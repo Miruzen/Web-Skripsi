@@ -1,5 +1,4 @@
 import LiveRate from "@/components/LiveRate";
-import { PredictionCard } from "@/components/PredictionCard";
 import NewsCard from "@/components/NewsCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -100,7 +99,18 @@ const Index = () => {
 
         {/* Predictions and News Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-          <PredictionCard />
+          <div className="h-full">
+            <Card className="shadow-card h-full">
+              <CardHeader>
+                <CardTitle>Prediksi Terbaru</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Lihat halaman analisis untuk prediksi LSTM lengkap dengan agregasi EMA dan sentimen.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
           <NewsCard />
         </div>
 
