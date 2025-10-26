@@ -258,8 +258,6 @@ const Analysis = () => {
 
         <HistoricalDataForm onDataFetched={setHistoricalData} />
 
-        <PredictionCard sentimentData={sentimentResult} historicalData={historicalData} />
-
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -340,6 +338,8 @@ const Analysis = () => {
             </div>
           </CardContent>
         </Card>
+
+        <PredictionCard sentimentData={sentimentResult} historicalData={historicalData} />
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="shadow-card">
