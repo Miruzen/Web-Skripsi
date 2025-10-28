@@ -2,41 +2,20 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { Calendar, TrendingUp, Target, BarChart3, Sparkles, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
 import ScrapeForm from "@/components/ScrapeFrom";
 import HistoricalDataForm from "@/components/HistoricalDataForm";
 import { PredictionCard } from "@/components/PredictionCard";
+import MoodSeriesChart from "@/components/MoodSeriesChart";
 
 // ==============================
-// 📊 Mock Data Generator
-// ==============================
-const generateMockData = (timeframe: string) => {
-  const dataPoints = timeframe === "1D" ? 24 : timeframe === "7D" ? 7 : timeframe === "1M" ? 30 : 90;
-  const data = [];
-
-  for (let i = 0; i < dataPoints; i++) {
-    const baseRate = 1.0850;
-    const actual = baseRate + (Math.random() - 0.5) * 0.02;
-    const predicted = actual + (Math.random() - 0.5) * 0.005;
-
-    data.push({
-      time: timeframe === "1D" ? `${i}:00` : `Hari ${i + 1}`,
-      actual: parseFloat(actual.toFixed(4)),
-      predicted: parseFloat(predicted.toFixed(4)),
-    });
-  }
-
-  return data;
-};
-
-// ==============================
-// 🧩 Types
+// 🧠 Types
 // ==============================
 interface SentimentAnalysisResult {
   sentiment: string;
@@ -58,37 +37,34 @@ interface HistoricalData {
   close: number;
   EMA20: number;
   EMA50: number;
+  startDate: Date;
+  endDate: Date;
 }
 
 // ==============================
 // ⚙️ Main Component
 // ==============================
 const Analysis = () => {
-  const [timeframe, setTimeframe] = useState("7D"); // State ini tetap ada, tapi tidak digunakan di UI
-  const [chartData, setChartData] = useState(() => generateMockData(timeframe)); 
-  
-  // State Sentimen
-  const [titleInput, setTitleInput] = useState("");
-  const [contentInput, setContentInput] = useState("");
   const [sentimentResult, setSentimentResult] = useState<AnalysisResponse | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  
-  // State Data Historis
+  const [titleInput, setTitleInput] = useState("");
+  const [contentInput, setContentInput] = useState("");
+
+  // Data historis dan tanggal
   const [historicalData, setHistoricalData] = useState<HistoricalData | null>(null);
-  
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Fungsi ini tetap dipanggil karena 'timeframe' masih digunakan oleh generateMockData
-    setChartData(generateMockData(timeframe));
-  }, [timeframe]);
-
-  // Placeholder untuk logika API Sentimen
+  // ==============================
+  // 🔍 Analisis Sentimen
+  // ==============================
   const analyzeSentiment = async () => {
     if (!titleInput.trim() && !contentInput.trim()) {
       toast({
         title: "Input Dibutuhkan",
-        description: "Silakan masukkan judul atau konten untuk dianalisis.",
+        description: "Masukkan judul atau konten untuk dianalisis.",
         variant: "destructive",
       });
       return;
@@ -96,38 +72,27 @@ const Analysis = () => {
 
     setIsAnalyzing(true);
     try {
-      // Simulasi pemanggilan API/Fungsi Supabase (menggunakan kode asli)
       const { data, error } = await supabase.functions.invoke<AnalysisResponse>(
-        'analyze-sentiment',
+        "analyze-sentiment",
         {
-          body: { title: titleInput, content: contentInput }
+          body: { title: titleInput, content: contentInput },
         }
       );
-    
-    console.log("Hasil Analisis Sentimen:", data);
-      if (error) {
-        throw error;
-      }
-      
+
+      console.log("📊 Hasil Analisis Sentimen:", data);
+
+      if (error) throw error;
       setSentimentResult(data);
 
-      if (data?.errors?.length) {
-        toast({
-          title: "Peringatan Analisis",
-          description: data.errors.join(". "),
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Analisis Selesai",
-          description: "Sentimen telah berhasil dianalisis.",
-        });
-      }
+      toast({
+        title: "Analisis Selesai ✅",
+        description: "Sentimen berhasil dianalisis menggunakan model FinBERT/LongFormer.",
+      });
     } catch (error: any) {
-      console.error('Kesalahan analisis sentimen:', error);
+      console.error("❌ Kesalahan analisis sentimen:", error);
       toast({
         title: "Error",
-        description: error.message || "Gagal menganalisis sentimen. Silakan coba lagi.",
+        description: error.message || "Gagal menganalisis sentimen.",
         variant: "destructive",
       });
     } finally {
@@ -135,28 +100,25 @@ const Analysis = () => {
     }
   };
 
-  // =====================================
-  // 🎨 Helpers (Dibutuhkan untuk rendering kartu hasil)
-  // =====================================
-
-  const getSentimentLabel = (sentiment: string | undefined) => {
+  // ==============================
+  // 🧭 Helper Rendering Sentimen
+  // ==============================
+  const getSentimentLabel = (sentiment?: string) => {
     switch (sentiment) {
-      case "positive": return "Positif";
-      case "negative": return "Negatif";
-      case "neutral": return "Netral";
-      default: return "Tidak Diketahui";
+      case "positive":
+        return "Positif";
+      case "negative":
+        return "Negatif";
+      case "neutral":
+        return "Netral";
+      default:
+        return "Tidak Diketahui";
     }
   };
 
   const formatPercentage = (value: number) => `${(value * 100).toFixed(1)}%`;
 
-  const mape = chartData.reduce((acc, point) => {
-    return acc + Math.abs((point.actual - point.predicted) / point.actual);
-  }, 0) / chartData.length * 100;
-
   const renderProbabilities = (analysis: SentimentAnalysisResult) => {
-    if (!analysis?.probabilities) return null;
-
     const { positive, neutral, negative } = analysis.probabilities;
     return (
       <div className="grid grid-cols-3 gap-2 text-sm mt-2">
@@ -177,7 +139,7 @@ const Analysis = () => {
   };
 
   const renderSentimentResultCard = (
-    type: 'Judul' | 'Konten',
+    type: "Judul" | "Konten",
     analysis: SentimentAnalysisResult | null
   ) => {
     if (!analysis) return null;
@@ -187,17 +149,22 @@ const Analysis = () => {
         <CardHeader className="pb-3 border-b">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
-            Hasil Analisis {type} 
+            Hasil Analisis {type}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
             <span className="text-sm font-medium text-muted-foreground">Sentimen:</span>
-            <Badge variant={
-                analysis.sentiment === "positive" ? "default" :
-                analysis.sentiment === "negative" ? "destructive" :
-                "secondary"
-              } className="px-3 py-1">
+            <Badge
+              variant={
+                analysis.sentiment === "positive"
+                  ? "default"
+                  : analysis.sentiment === "negative"
+                  ? "destructive"
+                  : "secondary"
+              }
+              className="px-3 py-1"
+            >
               {getSentimentLabel(analysis.sentiment)}
             </Badge>
           </div>
@@ -211,34 +178,39 @@ const Analysis = () => {
     );
   };
 
-  // =====================================
-  // 🧠 Render Component
-  // =====================================
+  // ==============================
+  // ⚙️ Render Component
+  // ==============================
   return (
     <div className="min-h-screen bg-background">
+      {/* ===== HEADER ===== */}
       <div className="border-b border-border bg-gradient-card">
-        <div className="container mx-auto px-6 py-8">
-          {/* JUDUL DIPUSATKAN DI SINI */}
-          <div className="flex items-center justify-center text-center">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">
-                Analisis Prediksi EUR/USD
-              </h1>
-              <p className="text-muted-foreground">
-                Bandingkan prediksi Model C dengan data pasar aktual
-              </p>
-            </div>
-            {/* Bagian kanan (Timeframe & Rentang Kustom) DIHAPUS */}
-          </div>
+        <div className="container mx-auto px-6 py-8 text-center">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Analisis Prediksi EUR/USD
+          </h1>
+          <p className="text-muted-foreground">
+            Gunakan model analitik untuk memahami sentimen pasar dan tren teknikal EUR/USD
+          </p>
         </div>
       </div>
 
+      {/* ===== BODY CONTENT ===== */}
       <div className="container mx-auto px-6 py-8 space-y-8">
         <ScrapeForm />
 
-        <HistoricalDataForm onDataFetched={setHistoricalData} />
+        {/* 🧾 Data Historis */}
+        <HistoricalDataForm
+          onDataFetched={(data: any) => {
+            setHistoricalData(data);
+            if (data?.startDate && data?.endDate) {
+              setStartDate(new Date(data.startDate));
+              setEndDate(new Date(data.endDate));
+            }
+          }}
+        />
 
-        {/* === SENTIMENT SECTION === */}
+        {/* 💬 Analisis Sentimen */}
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -248,33 +220,37 @@ const Analysis = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* === INPUT === */}
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title" className="text-sm font-semibold">Judul</Label>
+                <div>
+                  <Label htmlFor="title" className="text-sm font-semibold">
+                    Judul
+                  </Label>
                   <Input
                     id="title"
-                    placeholder="Masukkan judul untuk analisis..."
+                    placeholder="Masukkan judul berita..."
                     value={titleInput}
                     onChange={(e) => setTitleInput(e.target.value)}
-                    className="transition-all"
                     disabled={isAnalyzing}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="content" className="text-sm font-semibold">Konten</Label>
+                <div>
+                  <Label htmlFor="content" className="text-sm font-semibold">
+                    Konten
+                  </Label>
                   <Textarea
                     id="content"
-                    placeholder="Masukkan konten untuk analisis..."
+                    placeholder="Masukkan isi berita..."
                     value={contentInput}
                     onChange={(e) => setContentInput(e.target.value)}
                     rows={8}
-                    className="transition-all resize-none"
                     disabled={isAnalyzing}
                   />
                 </div>
-                <Button 
-                  onClick={analyzeSentiment} 
-                  disabled={isAnalyzing || (!titleInput.trim() && !contentInput.trim())}
+
+                <Button
+                  onClick={analyzeSentiment}
+                  disabled={isAnalyzing}
                   className="w-full gap-2"
                 >
                   {isAnalyzing ? (
@@ -291,26 +267,21 @@ const Analysis = () => {
                 </Button>
               </div>
 
-              {/* BAGIAN HASIL ANALISIS SENTIMEN (Kolom Kanan) */}
+              {/* === HASIL === */}
               <div className="space-y-4">
-                {(sentimentResult?.title || sentimentResult?.content) ? (
+                {sentimentResult?.title || sentimentResult?.content ? (
                   <>
-                    {sentimentResult?.title && renderSentimentResultCard("Judul", sentimentResult.title)}
-                    {sentimentResult?.content && renderSentimentResultCard("Konten", sentimentResult.content)}
-                    <div className="pt-2">
-                      <p className="text-xs text-muted-foreground italic p-3 rounded-lg bg-muted/20 border border-border/50">
-                        <strong>Catatan:</strong> Analisis berita menggunakan model FinBERT dan LongFormer untuk menentukan 
-                        sentimen berdasarkan konteks. Probabilitas menunjukkan tingkat keyakinan
-                        untuk setiap kategori sentimen.
-                      </p>
-                    </div>
+                    {sentimentResult?.title &&
+                      renderSentimentResultCard("Judul", sentimentResult.title)}
+                    {sentimentResult?.content &&
+                      renderSentimentResultCard("Konten", sentimentResult.content)}
                   </>
                 ) : (
                   <div className="h-full flex items-center justify-center p-8">
                     <div className="text-center space-y-2">
-                      <Sparkles className="h-12 w-12 mx-auto text-muted-foreground/40" />
+                      <Sparkles className="h-10 w-10 mx-auto text-muted-foreground/40" />
                       <p className="text-sm text-muted-foreground">
-                        Hasil analisis akan muncul di sini
+                        Hasil analisis akan muncul di sini.
                       </p>
                     </div>
                   </div>
@@ -320,8 +291,14 @@ const Analysis = () => {
           </CardContent>
         </Card>
 
-        <PredictionCard sentimentData={sentimentResult} historicalData={historicalData} />
+        {/* 🎯 Mood Series Chart */}
+        <MoodSeriesChart startDate={startDate ?? undefined} endDate={endDate ?? undefined} />
 
+        {/* 🔮 LSTM Prediction */}
+        <PredictionCard
+          sentimentData={sentimentResult}
+          historicalData={historicalData}
+        />
       </div>
     </div>
   );

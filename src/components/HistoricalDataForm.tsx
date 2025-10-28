@@ -9,8 +9,17 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import * as XLSX from 'xlsx';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import * as XLSX from "xlsx";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 interface TrendAnalysis {
   trend: string;
@@ -24,9 +33,10 @@ interface TimeSeriesPoint {
   close: number;
   EMA20: number;
   EMA50: number;
+  norm_close?: number;
 }
 
-interface HistoricalData {
+interface SummaryResponse {
   status: string;
   pair: string;
   as_of_date: string;
@@ -34,21 +44,41 @@ interface HistoricalData {
   EMA20: number;
   EMA50: number;
   trend_analysis: TrendAnalysis;
-  time_series?: TimeSeriesPoint[];
+  message?: string;
+}
+
+interface AnalyzeResponse {
+  status: string;
+  pair: string;
+  chart_data?: {
+    dates: string[];
+    close: number[];
+    EMA20: number[];
+    EMA50: number[];
+    norm_close: number[];
+  };
+  message?: string;
 }
 
 interface HistoricalDataFormProps {
-  onDataFetched?: (data: { close: number; EMA20: number; EMA50: number }) => void;
+  onDataFetched?: (data: { summary: SummaryResponse; analyze: AnalyzeResponse }) => void;
 }
 
 const HistoricalDataForm = ({ onDataFetched }: HistoricalDataFormProps) => {
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<HistoricalData | null>(null);
+  const [summary, setSummary] = useState<SummaryResponse | null>(null);
+  const [analyze, setAnalyze] = useState<AnalyzeResponse | null>(null);
   const { toast } = useToast();
 
-  const fetchHistoricalData = async () => {
+  // ==========================
+  // Hardcoded API Endpoints
+  // ==========================
+  const SUMMARY_API = "https://miruzen-modelb-api.hf.space/summary";
+  const ANALYZE_API = "https://miruzen-modelb-api.hf.space/analyze";
+
+  const fetchData = async () => {
     if (!startDate || !endDate) {
       toast({
         title: "Tanggal Diperlukan",
@@ -68,42 +98,59 @@ const HistoricalDataForm = ({ onDataFetched }: HistoricalDataFormProps) => {
     }
 
     setLoading(true);
+    setSummary(null);
+    setAnalyze(null);
+
     try {
-      const response = await fetch("https://miruzen-modelb-api.hf.space/summary", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          start_date: format(startDate, "yyyy-MM-dd"),
-          end_date: format(endDate, "yyyy-MM-dd"),
-        }),
+      const body = JSON.stringify({
+        start_date: format(startDate, "yyyy-MM-dd"),
+        end_date: format(endDate, "yyyy-MM-dd"),
       });
 
-      if (!response.ok) {
-        throw new Error("Gagal mengambil data historis");
+      console.log("📡 Mengirim request ke API dengan body:", body);
+
+      const [summaryRes, analyzeRes] = await Promise.all([
+        fetch(SUMMARY_API, { method: "POST", headers: { "Content-Type": "application/json" }, body }),
+        fetch(ANALYZE_API, { method: "POST", headers: { "Content-Type": "application/json" }, body }),
+      ]);
+
+      const summaryData = await summaryRes.json();
+      const analyzeData = await analyzeRes.json();
+
+      console.log("✅ Hasil /summary:", summaryData);
+      console.log("✅ Hasil /analyze:", analyzeData);
+
+      // Error handling untuk API yang gagal atau kosong
+      if (!summaryRes.ok || summaryData.status !== "ok") {
+        throw new Error(summaryData.message || "Gagal memuat data ringkasan (summary).");
+      }
+      if (!analyzeRes.ok || analyzeData.status !== "ok" || !analyzeData.chart_data) {
+        throw new Error(analyzeData.message || "Gagal memuat data analisis grafik (analyze).");
       }
 
-      const result = await response.json();
-      setData(result);
-
-      // Call the callback with the fetched data
-      if (onDataFetched) {
-        onDataFetched({
-          close: result.close,
-          EMA20: result.EMA20,
-          EMA50: result.EMA50,
+      // Deteksi jika data terlalu sedikit (<50 hari)
+      const dataPoints = analyzeData.chart_data.dates?.length || 0;
+      if (dataPoints < 50) {
+        toast({
+          title: "Data Terlalu Sedikit",
+          description: `Data yang tersedia hanya ${dataPoints} hari. Minimum 50 hari dibutuhkan untuk analisis yang stabil.`,
+          variant: "destructive",
         });
       }
 
+      setSummary(summaryData);
+      setAnalyze(analyzeData);
+
+      if (onDataFetched) onDataFetched({ summary: summaryData, analyze: analyzeData });
+
       toast({
-        title: "Data Berhasil Diambil",
-        description: "Data historis telah berhasil dimuat.",
+        title: "Berhasil",
+        description: "Data historis dan analisis tren berhasil dimuat.",
       });
     } catch (error: any) {
-      console.error("Error fetching historical data:", error);
+      console.error("❌ Error fetching data:", error);
       toast({
-        title: "Error",
+        title: "Terjadi Kesalahan",
         description: error.message || "Gagal mengambil data historis.",
         variant: "destructive",
       });
@@ -112,58 +159,48 @@ const HistoricalDataForm = ({ onDataFetched }: HistoricalDataFormProps) => {
     }
   };
 
-  const getTrendColor = (trend: string) => {
-    return trend === "bearish" ? "text-destructive" : "text-success";
-  };
-
-  const getTrendBadgeVariant = (trend: string) => {
-    return trend === "bearish" ? "destructive" : "default";
-  };
-
   const downloadExcel = () => {
-    if (!data || !startDate || !endDate) return;
+    if (!summary || !analyze) return;
 
-    // Create worksheet data
-    const worksheetData = [
-      ["EUR/USD Historical Data & EMA Analysis"],
+    const wsData = [
+      ["EUR/USD EMA & Trend Analysis"],
       [""],
-      ["Date Range", `${format(startDate, "yyyy-MM-dd")} to ${format(endDate, "yyyy-MM-dd")}`],
+      ["Date Range", `${format(startDate!, "yyyy-MM-dd")} to ${format(endDate!, "yyyy-MM-dd")}`],
       [""],
-      ["Pair Information"],
-      ["Currency Pair", data.pair],
-      ["As of Date", data.as_of_date],
-      ["Closing Price", data.close],
+      ["Pair", summary.pair],
+      ["As of Date", summary.as_of_date],
+      ["Close", summary.close],
+      ["EMA20", summary.EMA20],
+      ["EMA50", summary.EMA50],
+      ["Trend", summary.trend_analysis.trend],
+      ["Strength", summary.trend_analysis.strength],
+      ["Position", summary.trend_analysis.price_position],
       [""],
-      ["EMA Calculations"],
-      ["EMA 20", data.EMA20],
-      ["EMA 50", data.EMA50],
-      ["EMA Gap %", data.trend_analysis.ema_gap_percent],
-      [""],
-      ["Trend Analysis"],
-      ["Trend", data.trend_analysis.trend],
-      ["Strength", data.trend_analysis.strength],
-      ["Price Position", data.trend_analysis.price_position],
+      ["Date", "Close", "EMA20", "EMA50", "Normalized Close"],
     ];
 
-    // Create workbook and worksheet
-    const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+    analyze.chart_data?.dates.forEach((d, i) => {
+      wsData.push([
+        d,
+        analyze.chart_data!.close[i],
+        analyze.chart_data!.EMA20[i],
+        analyze.chart_data!.EMA50[i],
+        analyze.chart_data!.norm_close[i],
+      ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Historical Data");
-
-    // Set column widths
-    ws['!cols'] = [
-      { wch: 20 },
-      { wch: 50 }
-    ];
-
-    // Download file
-    XLSX.writeFile(wb, `EUR-USD-Historical-${format(startDate, "yyyy-MM-dd")}-to-${format(endDate, "yyyy-MM-dd")}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, "Data");
+    XLSX.writeFile(wb, `EURUSD_Analysis_${format(startDate!, "yyyyMMdd")}_${format(endDate!, "yyyyMMdd")}.xlsx`);
 
     toast({
       title: "Download Berhasil",
-      description: "File Excel telah berhasil diunduh.",
+      description: "Data berhasil diunduh dalam format Excel.",
     });
   };
+
+  const getTrendBadgeVariant = (trend: string) => (trend === "bearish" ? "destructive" : "default");
 
   return (
     <Card className="shadow-card">
@@ -174,30 +211,19 @@ const HistoricalDataForm = ({ onDataFetched }: HistoricalDataFormProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* ================= Date Pickers ================= */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Tanggal Mulai</Label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !startDate && "text-muted-foreground"
-                  )}
-                >
+                <Button variant="outline" className={cn("w-full justify-start text-left", !startDate && "text-muted-foreground")}>
                   <Calendar className="mr-2 h-4 w-4" />
                   {startDate ? format(startDate, "PPP") : <span>Pilih tanggal</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={startDate}
-                  onSelect={setStartDate}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
+                <CalendarComponent mode="single" selected={startDate} onSelect={setStartDate} initialFocus />
               </PopoverContent>
             </Popover>
           </div>
@@ -206,193 +232,100 @@ const HistoricalDataForm = ({ onDataFetched }: HistoricalDataFormProps) => {
             <Label>Tanggal Akhir</Label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !endDate && "text-muted-foreground"
-                  )}
-                >
+                <Button variant="outline" className={cn("w-full justify-start text-left", !endDate && "text-muted-foreground")}>
                   <Calendar className="mr-2 h-4 w-4" />
                   {endDate ? format(endDate, "PPP") : <span>Pilih tanggal</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={endDate}
-                  onSelect={setEndDate}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
+                <CalendarComponent mode="single" selected={endDate} onSelect={setEndDate} initialFocus />
               </PopoverContent>
             </Popover>
           </div>
         </div>
 
+        {/* ================= Action Buttons ================= */}
         <div className="flex gap-2">
-          <Button
-            onClick={fetchHistoricalData}
-            disabled={loading || !startDate || !endDate}
-            className="flex-1 gap-2"
-          >
+          <Button onClick={fetchData} disabled={loading} className="flex-1 gap-2">
             {loading ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Memuat Data...
+                <Loader2 className="h-4 w-4 animate-spin" /> Memuat Data...
               </>
             ) : (
               <>
-                <TrendingUp className="h-4 w-4" />
-                Kalkulasi Data Historis
+                <TrendingUp className="h-4 w-4" /> Kalkulasi Data Historis
               </>
             )}
           </Button>
-          
-          <Button
-            onClick={downloadExcel}
-            disabled={!data}
-            variant="outline"
-            className="gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Download Hasil
+
+          <Button onClick={downloadExcel} disabled={!summary || !analyze} variant="outline" className="gap-2">
+            <Download className="h-4 w-4" /> Download CSV
           </Button>
         </div>
 
-        {data && (
-          <div className="space-y-4 pt-4 border-t">
-            {data.time_series && data.time_series.length > 0 && (
-              <Card className="border-2 bg-gradient-to-br from-card to-card/80">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-semibold flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-primary" />
-                    Grafik EMA (EMA 20 & EMA 50)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={data.time_series}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis 
-                        dataKey="date" 
-                        className="text-xs"
-                        tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                      />
-                      <YAxis 
-                        className="text-xs"
-                        tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                        domain={['auto', 'auto']}
-                      />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
-                        }}
-                      />
-                      <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="close" 
-                        stroke="hsl(var(--primary))" 
-                        strokeWidth={2}
-                        name="Harga Penutupan"
-                        dot={false}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="EMA20" 
-                        stroke="hsl(var(--success))" 
-                        strokeWidth={2}
-                        name="EMA 20"
-                        dot={false}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="EMA50" 
-                        stroke="hsl(var(--accent))" 
-                        strokeWidth={2}
-                        name="EMA 50"
-                        dot={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            )}
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="border-2">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Informasi Pasangan
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Pasangan:</span>
-                    <span className="font-semibold">{data.pair}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Tanggal:</span>
-                    <span className="font-medium">{data.as_of_date}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Harga Penutupan:</span>
-                    <span className="font-bold text-primary">{data.close.toFixed(6)}</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-2">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Perhitungan EMA
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">EMA 20:</span>
-                    <span className="font-bold text-success">{data.EMA20.toFixed(6)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">EMA 50:</span>
-                    <span className="font-bold text-accent">{data.EMA50.toFixed(6)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Gap EMA:</span>
-                    <span className="font-medium">{data.trend_analysis.ema_gap_percent.toFixed(3)}%</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card className="border-2 bg-gradient-to-br from-card to-card/80">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  Analisis Tren & Mood
-                </CardTitle>
+        {/* ================= Display Summary ================= */}
+        {summary && summary.status === "ok" && (
+          <div className="space-y-4 border-t pt-4">
+            <Card className="border-2">
+              <CardHeader>
+                <CardTitle className="text-sm text-muted-foreground">Ringkasan Tren</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                  <span className="text-sm font-medium text-muted-foreground">Tren:</span>
-                  <Badge variant={getTrendBadgeVariant(data.trend_analysis.trend)} className="px-3 py-1">
-                    {data.trend_analysis.trend.toUpperCase()}
+              <CardContent className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Tanggal:</span>
+                  <span className="font-semibold">{summary.as_of_date}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Harga Penutupan:</span>
+                  <span className="font-bold text-primary">{summary.close.toFixed(6)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>EMA20:</span>
+                  <span className="font-semibold text-success">{summary.EMA20.toFixed(6)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>EMA50:</span>
+                  <span className="font-semibold text-accent">{summary.EMA50.toFixed(6)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Tren:</span>
+                  <Badge variant={getTrendBadgeVariant(summary.trend_analysis.trend)}>
+                    {summary.trend_analysis.trend.toUpperCase()}
                   </Badge>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                  <span className="text-sm font-medium text-muted-foreground">Kekuatan:</span>
-                  <span className="font-semibold capitalize">{data.trend_analysis.strength}</span>
-                </div>
-                <div className="p-3 rounded-lg bg-muted/20">
-                  <span className="text-sm font-medium text-muted-foreground">Posisi Harga:</span>
-                  <p className="text-sm mt-1">{data.trend_analysis.price_position}</p>
                 </div>
               </CardContent>
             </Card>
           </div>
+        )}
+
+        {/* ================= Chart Visualization ================= */}
+        {analyze && analyze.status === "ok" && analyze.chart_data && (
+          <Card className="border-2 mt-4">
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">Grafik EMA & Harga Penutupan</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart
+                  data={analyze.chart_data.dates.map((d, i) => ({
+                    date: d,
+                    close: analyze.chart_data!.close[i],
+                    EMA20: analyze.chart_data!.EMA20[i],
+                    EMA50: analyze.chart_data!.EMA50[i],
+                  }))}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                  <YAxis domain={["auto", "auto"]} />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="close" stroke="#8884d8" name="Close" dot={false} />
+                  <Line type="monotone" dataKey="EMA20" stroke="#22c55e" name="EMA20" dot={false} />
+                  <Line type="monotone" dataKey="EMA50" stroke="#f59e0b" name="EMA50" dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         )}
       </CardContent>
     </Card>

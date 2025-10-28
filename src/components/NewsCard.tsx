@@ -27,6 +27,7 @@ interface ScrapedNewsItem {
 
 const NEWS_SOURCES = [
   "https://www.investing.com/news/forex-news",
+  "https://www.dailyforex.com/articles/currency-pairs/english/5754/1"
 ];
 
 const NewsCard = () => {
@@ -122,7 +123,7 @@ const NewsCard = () => {
           <Newspaper className="h-5 w-5 text-accent" />
           Berita Forex Terbaru
         </CardTitle>
-        <p>
+        <p className="text-muted-foreground">
           Data diambil langsung dari sumber terpercaya (Investing.com)
         </p>
       </CardHeader>

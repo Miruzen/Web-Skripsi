@@ -65,59 +65,106 @@ export function PredictionCard({ sentimentData, historicalData }: PredictionCard
   // 🧠 Logic Functions
   // =====================================
 
-  const generatePrediction = async () => {
-    if (!sentimentData || !historicalData) {
-      return;
-    }
+const generatePrediction = async () => {
+  if (!sentimentData || !historicalData) {
+    toast({
+      title: "⚠️ Data Tidak Lengkap",
+      description: "Pastikan data historis dan sentimen sudah diambil sebelum prediksi.",
+      variant: "destructive",
+    });
+    return;
+  }
 
-    setLoading(true);
-    try {
-      // Menghitung skor sentimen komposit
-      const titleSentiment = calculateSentimentScore(sentimentData.title);
-      const contentSentiment = calculateSentimentScore(sentimentData.content);
-      const compositeSentiment = (titleSentiment + contentSentiment) / 2;
+  setLoading(true);
+  try {
+    console.log("📊 Data historis diterima untuk prediksi:", historicalData);
+    console.log("🧠 Data sentimen diterima untuk prediksi:", sentimentData);
 
-      // Payload ke Supabase Edge Function (Asumsi endpoint VITE_SUPABASE_URL sudah diset)
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/lstm-prediction`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({
-            ema20: historicalData.EMA20,
-            ema50: historicalData.EMA50,
-            current_close: historicalData.close,
-            sentiment_score: compositeSentiment,
-          }),
-        }
+    // Hitung skor sentimen komposit
+    const titleSentiment = calculateSentimentScore(sentimentData.title);
+    const contentSentiment = calculateSentimentScore(sentimentData.content);
+    const compositeSentiment = (titleSentiment + contentSentiment) / 2;
+
+    // Ambil data EMA & harga dari struktur baru
+    const ema20 =
+      historicalData?.summary?.EMA20 ||
+      historicalData?.ema20 ||
+      historicalData?.EMA20;
+    const ema50 =
+      historicalData?.summary?.EMA50 ||
+      historicalData?.ema50 ||
+      historicalData?.EMA50;
+    const current_close =
+      historicalData?.summary?.close ||
+      historicalData?.close ||
+      historicalData?.chart_data?.close?.slice(-1)?.[0];
+
+    // Validasi data
+    if (
+      ema20 === undefined ||
+      ema50 === undefined ||
+      current_close === undefined
+    ) {
+      throw new Error(
+        "Data EMA atau harga penutupan tidak ditemukan. Pastikan format data sesuai."
       );
-
-      if (!response.ok) {
-        throw new Error("Gagal menghasilkan prediksi dari API");
-      }
-
-      const data = await response.json();
-      // Asumsi data yang diterima sudah bertipe PredictionResult
-      setPrediction(data); 
-      
-      toast({
-        title: "✅ Prediksi LSTM Dihasilkan",
-        description: "Prediksi EUR/USD hari berikutnya dengan evaluasi MAPE selesai.",
-      });
-    } catch (error) {
-      console.error("Kesalahan Prediksi:", error);
-      toast({
-        title: "❌ Prediksi Gagal",
-        description: error instanceof Error ? error.message : "Gagal menghasilkan prediksi",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
     }
-  };
+
+    const body = {
+      ema20: parseFloat(ema20),
+      ema50: parseFloat(ema50),
+      current_close: parseFloat(current_close),
+      sentiment_score: compositeSentiment,
+    };
+
+    console.log("📡 Payload dikirim ke LSTM:", body);
+
+    // Kirim request ke Supabase Edge Function
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/lstm-prediction`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify(body),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("❌ API Response Error:", errorText);
+      throw new Error(
+        `Gagal menghasilkan prediksi dari API (status ${response.status})`
+      );
+    }
+
+    const data = await response.json();
+    console.log("✅ Hasil prediksi LSTM:", data);
+
+    setPrediction(data);
+    toast({
+      title: "✅ Prediksi LSTM Dihasilkan",
+      description:
+        "Prediksi EUR/USD hari berikutnya berhasil dihitung dengan evaluasi MAPE.",
+    });
+  } catch (error) {
+    console.error("❌ Kesalahan Prediksi:", error);
+    toast({
+      title: "❌ Prediksi Gagal",
+      description:
+        error instanceof Error
+          ? error.message
+          : "Gagal menghasilkan prediksi dari API",
+      variant: "destructive",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   const calculateSentimentScore = (analysis: SentimentAnalysisResult | null): number => {
     if (!analysis) return 0;
