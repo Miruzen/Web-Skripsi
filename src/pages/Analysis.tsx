@@ -103,7 +103,8 @@ const Analysis = () => {
           body: { title: titleInput, content: contentInput }
         }
       );
-
+    
+    console.log("Hasil Analisis Sentimen:", data);
       if (error) {
         throw error;
       }
@@ -298,8 +299,8 @@ const Analysis = () => {
                     {sentimentResult?.content && renderSentimentResultCard("Konten", sentimentResult.content)}
                     <div className="pt-2">
                       <p className="text-xs text-muted-foreground italic p-3 rounded-lg bg-muted/20 border border-border/50">
-                        <strong>Catatan:</strong> Analisis sentimen menggunakan AI untuk menentukan 
-                        sentimen berdasarkan konteks. Probabilitas menunjukkan tingkat kepercayaan 
+                        <strong>Catatan:</strong> Analisis berita menggunakan model FinBERT dan LongFormer untuk menentukan 
+                        sentimen berdasarkan konteks. Probabilitas menunjukkan tingkat keyakinan
                         untuk setiap kategori sentimen.
                       </p>
                     </div>
