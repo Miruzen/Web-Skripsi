@@ -10,12 +10,20 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import * as XLSX from 'xlsx';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface TrendAnalysis {
   trend: string;
   strength: string;
   price_position: string;
   ema_gap_percent: number;
+}
+
+interface TimeSeriesPoint {
+  date: string;
+  close: number;
+  EMA20: number;
+  EMA50: number;
 }
 
 interface HistoricalData {
@@ -26,6 +34,7 @@ interface HistoricalData {
   EMA20: number;
   EMA50: number;
   trend_analysis: TrendAnalysis;
+  time_series?: TimeSeriesPoint[];
 }
 
 interface HistoricalDataFormProps {
@@ -253,6 +262,66 @@ const HistoricalDataForm = ({ onDataFetched }: HistoricalDataFormProps) => {
 
         {data && (
           <div className="space-y-4 pt-4 border-t">
+            {data.time_series && data.time_series.length > 0 && (
+              <Card className="border-2 bg-gradient-to-br from-card to-card/80">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    Grafik EMA (EMA 20 & EMA 50)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={data.time_series}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis 
+                        dataKey="date" 
+                        className="text-xs"
+                        tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                      />
+                      <YAxis 
+                        className="text-xs"
+                        tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                        domain={['auto', 'auto']}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="close" 
+                        stroke="hsl(var(--primary))" 
+                        strokeWidth={2}
+                        name="Harga Penutupan"
+                        dot={false}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="EMA20" 
+                        stroke="hsl(var(--success))" 
+                        strokeWidth={2}
+                        name="EMA 20"
+                        dot={false}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="EMA50" 
+                        stroke="hsl(var(--accent))" 
+                        strokeWidth={2}
+                        name="EMA 50"
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            )}
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="border-2">
                 <CardHeader className="pb-3">
