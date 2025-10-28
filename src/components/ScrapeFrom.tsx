@@ -101,9 +101,26 @@ export default function ScrapeForm() {
               className="transition-all"
               disabled={loading}
             />
-            <p className="text-xs text-muted-foreground">
-              Mendukung: investing.com, dailyforex.com
-            </p>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>Mendukung:</span>
+              <a 
+                href="https://www.investing.com/currencies/eur-usd-news" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline inline-flex items-center gap-1"
+              >
+                investing.com <ExternalLink className="h-3 w-3" />
+              </a>
+              <span>•</span>
+              <a 
+                href="https://www.dailyforex.com/forex-news" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline inline-flex items-center gap-1"
+              >
+                dailyforex.com <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
           </div>
 
           <div className="flex gap-2">

@@ -2,13 +2,14 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Calendar, TrendingUp, Loader2, BarChart3 } from "lucide-react";
+import { Calendar, TrendingUp, Loader2, BarChart3, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import * as XLSX from 'xlsx';
 
 interface TrendAnalysis {
   trend: string;
@@ -110,6 +111,51 @@ const HistoricalDataForm = ({ onDataFetched }: HistoricalDataFormProps) => {
     return trend === "bearish" ? "destructive" : "default";
   };
 
+  const downloadExcel = () => {
+    if (!data || !startDate || !endDate) return;
+
+    // Create worksheet data
+    const worksheetData = [
+      ["EUR/USD Historical Data & EMA Analysis"],
+      [""],
+      ["Date Range", `${format(startDate, "yyyy-MM-dd")} to ${format(endDate, "yyyy-MM-dd")}`],
+      [""],
+      ["Pair Information"],
+      ["Currency Pair", data.pair],
+      ["As of Date", data.as_of_date],
+      ["Closing Price", data.close],
+      [""],
+      ["EMA Calculations"],
+      ["EMA 20", data.EMA20],
+      ["EMA 50", data.EMA50],
+      ["EMA Gap %", data.trend_analysis.ema_gap_percent],
+      [""],
+      ["Trend Analysis"],
+      ["Trend", data.trend_analysis.trend],
+      ["Strength", data.trend_analysis.strength],
+      ["Price Position", data.trend_analysis.price_position],
+    ];
+
+    // Create workbook and worksheet
+    const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Historical Data");
+
+    // Set column widths
+    ws['!cols'] = [
+      { wch: 20 },
+      { wch: 50 }
+    ];
+
+    // Download file
+    XLSX.writeFile(wb, `EUR-USD-Historical-${format(startDate, "yyyy-MM-dd")}-to-${format(endDate, "yyyy-MM-dd")}.xlsx`);
+
+    toast({
+      title: "Download Berhasil",
+      description: "File Excel telah berhasil diunduh.",
+    });
+  };
+
   return (
     <Card className="shadow-card">
       <CardHeader>
@@ -175,23 +221,35 @@ const HistoricalDataForm = ({ onDataFetched }: HistoricalDataFormProps) => {
           </div>
         </div>
 
-        <Button
-          onClick={fetchHistoricalData}
-          disabled={loading || !startDate || !endDate}
-          className="w-full gap-2"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Memuat Data...
-            </>
-          ) : (
-            <>
-              <TrendingUp className="h-4 w-4" />
-              Ambil Data Historis
-            </>
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={fetchHistoricalData}
+            disabled={loading || !startDate || !endDate}
+            className="flex-1 gap-2"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Memuat Data...
+              </>
+            ) : (
+              <>
+                <TrendingUp className="h-4 w-4" />
+                Ambil Data Historis
+              </>
+            )}
+          </Button>
+          
+          <Button
+            onClick={downloadExcel}
+            disabled={!data}
+            variant="outline"
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Download Data
+          </Button>
+        </div>
 
         {data && (
           <div className="space-y-4 pt-4 border-t">
