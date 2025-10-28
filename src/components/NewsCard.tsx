@@ -1,7 +1,10 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Newspaper, ExternalLink, Clock } from "lucide-react";
+import { Newspaper, ExternalLink, Clock, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface NewsItem {
   id: string;
@@ -13,46 +16,94 @@ interface NewsItem {
   url: string;
 }
 
-const mockNews: NewsItem[] = [
-  {
-    id: "1",
-    title: "ECB Sinyal Perubahan Suku Bunga Potensial di Q2",
-    summary: "Pejabat Bank Sentral Eropa mengisyaratkan penyesuaian kebijakan moneter menyusul data inflasi...",
-    timestamp: "2024-01-15 13:45:00",
-    source: "Reuters",
-    impact: "High",
-    url: "#"
-  },
-  {
-    id: "2",
-    title: "Dolar AS Menguat pada Data Ketenagakerjaan",
-    summary: "Angka ketenagakerjaan terbaru melampaui ekspektasi, meningkatkan kepercayaan USD di berbagai pasangan utama...",
-    timestamp: "2024-01-15 12:30:00", 
-    source: "Bloomberg",
-    impact: "Medium",
-    url: "#"
-  },
-  {
-    id: "3",
-    title: "Data Manufaktur Eropa Menunjukkan Pemulihan",
-    summary: "PMI manufaktur menunjukkan pertumbuhan berkelanjutan di zona euro, mendukung prospek EUR...",
-    timestamp: "2024-01-15 11:15:00",
-    source: "Financial Times",
-    impact: "Medium",
-    url: "#"
-  },
-  {
-    id: "4",
-    title: "Risalah Fed Ungkap Optimisme Hati-hati",
-    summary: "Risalah rapat Federal Reserve menunjukkan pendekatan terukur terhadap keputusan suku bunga masa depan...",
-    timestamp: "2024-01-15 10:00:00",
-    source: "MarketWatch",
-    impact: "Low",
-    url: "#"
-  }
+interface ScrapedNewsItem {
+  title: string;
+  link: string;
+  summary?: string;
+  content?: string;
+  author?: string;
+  date?: string;
+}
+
+const NEWS_SOURCES = [
+  "https://www.investing.com/news/forex-news",
+  "https://www.dailyforex.com/forex-news"
 ];
 
 const NewsCard = () => {
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      setIsLoading(true);
+      try {
+        const allNews: NewsItem[] = [];
+        
+        // Fetch news from all sources
+        for (const sourceUrl of NEWS_SOURCES) {
+          try {
+            const { data, error } = await supabase.functions.invoke('scrape-news', {
+              body: { url: sourceUrl }
+            });
+
+            if (error) {
+              console.error(`Error fetching from ${sourceUrl}:`, error);
+              continue;
+            }
+
+            if (data?.items && Array.isArray(data.items)) {
+              const sourceName = sourceUrl.includes('investing.com') ? 'Investing.com' : 'DailyForex';
+              
+              const formattedNews: NewsItem[] = data.items.slice(0, 5).map((item: ScrapedNewsItem, index: number) => ({
+                id: `${sourceName}-${index}`,
+                title: item.title,
+                summary: item.summary || item.content?.substring(0, 150) + '...' || 'Klik untuk membaca artikel lengkap',
+                timestamp: item.date || new Date().toISOString(),
+                source: sourceName,
+                impact: (index === 0 ? "High" : index < 3 ? "Medium" : "Low") as "High" | "Medium" | "Low",
+                url: item.link
+              }));
+              
+              allNews.push(...formattedNews);
+            }
+          } catch (error) {
+            console.error(`Error processing ${sourceUrl}:`, error);
+          }
+        }
+
+        if (allNews.length > 0) {
+          // Sort by timestamp (newest first) and limit to 8 items
+          const sortedNews = allNews
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+            .slice(0, 8);
+          
+          setNews(sortedNews);
+        } else {
+          toast({
+            title: "Info",
+            description: "Tidak ada berita yang berhasil dimuat. Menggunakan data contoh.",
+            variant: "default",
+          });
+          // Fallback to empty array if no news fetched
+          setNews([]);
+        }
+      } catch (error) {
+        console.error("Error fetching news:", error);
+        toast({
+          title: "Error",
+          description: "Gagal memuat berita terbaru.",
+          variant: "destructive",
+        });
+        setNews([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNews();
+  }, [toast]);
   const getImpactBadge = (impact: string) => {
     switch (impact) {
       case "High":
@@ -75,43 +126,62 @@ const NewsCard = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {mockNews.map((news) => {
-            const impactBadge = getImpactBadge(news.impact);
-            
-            return (
-              <div key={news.id} className="p-4 rounded-lg bg-secondary/30 border border-border hover:bg-secondary/50 transition-smooth">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-medium text-foreground leading-tight">
-                    {news.title}
-                  </h3>
-                  <Badge {...impactBadge}>
-                    {news.impact}
-                  </Badge>
-                </div>
-                
-                <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
-                  {news.summary}
-                </p>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span>{news.source}</span>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {new Date(news.timestamp).toLocaleTimeString()}
-                    </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : news.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Newspaper className="h-12 w-12 mx-auto mb-3 opacity-40" />
+            <p>Tidak ada berita tersedia saat ini</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {news.map((newsItem) => {
+              const impactBadge = getImpactBadge(newsItem.impact);
+              
+              return (
+                <div key={newsItem.id} className="p-4 rounded-lg bg-secondary/30 border border-border hover:bg-secondary/50 transition-smooth">
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-medium text-foreground leading-tight">
+                      {newsItem.title}
+                    </h3>
+                    <Badge {...impactBadge}>
+                      {newsItem.impact}
+                    </Badge>
                   </div>
                   
-                  <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
-                    Baca Selengkapnya
-                    <ExternalLink className="h-3 w-3" />
-                  </Button>
+                  <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
+                    {newsItem.summary}
+                  </p>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span>{newsItem.source}</span>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {new Date(newsItem.timestamp).toLocaleTimeString('id-ID', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-7 text-xs gap-1"
+                      onClick={() => window.open(newsItem.url, '_blank', 'noopener,noreferrer')}
+                    >
+                      Baca Selengkapnya
+                      <ExternalLink className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
