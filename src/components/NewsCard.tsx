@@ -27,7 +27,6 @@ interface ScrapedNewsItem {
 
 const NEWS_SOURCES = [
   "https://www.investing.com/news/forex-news",
-  "https://www.dailyforex.com/forex-news"
 ];
 
 const NewsCard = () => {
@@ -41,7 +40,6 @@ const NewsCard = () => {
       try {
         const allNews: NewsItem[] = [];
         
-        // Fetch news from all sources
         for (const sourceUrl of NEWS_SOURCES) {
           try {
             const { data, error } = await supabase.functions.invoke('scrape-news', {
@@ -124,6 +122,9 @@ const NewsCard = () => {
           <Newspaper className="h-5 w-5 text-accent" />
           Berita Forex Terbaru
         </CardTitle>
+        <p>
+          Data diambil langsung dari sumber terpercaya (Investing.com)
+        </p>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -146,14 +147,14 @@ const NewsCard = () => {
                     <h3 className="font-medium text-foreground leading-tight">
                       {newsItem.title}
                     </h3>
-                    <Badge {...impactBadge}>
+                    {/* <Badge {...impactBadge}>
                       {newsItem.impact}
-                    </Badge>
+                    </Badge> */}
                   </div>
                   
-                  <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
+                  {/* <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
                     {newsItem.summary}
-                  </p>
+                  </p> */}
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">

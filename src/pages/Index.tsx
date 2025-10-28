@@ -3,27 +3,28 @@ import NewsCard from "@/components/NewsCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Brain, Newspaper, BarChart3, ArrowRight } from "lucide-react";
+import { TrendingUp, Brain, Newspaper, BarChart3, ArrowRight, CornerRightUp } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       
-      {/* Hero Section */}
+      {/* ================================== */}
+      {/* Hero Section (Dipertahankan) */}
+      {/* ================================== */}
       <div className="bg-gradient-card border-b border-border">
-        <div className="container mx-auto px-6 py-12">
+        <div className="container mx-auto px-6 py-16">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="mb-6">
-              <Badge variant="outline" className="text-accent border-accent/50 mb-4">
-                Didukung oleh Model AI Hibrida
-              </Badge>
-              <h1 className="text-5xl font-bold text-foreground mb-6">
-                Prediksi EUR/USD <span className="text-accent">Canggih</span>
+            <div className="mb-8">
+              <h1 className="text-5xl font-extrabold text-foreground mb-6 leading-tight">
+                Prediksi EUR/USD 
               </h1>
               <p className="text-xl text-muted-foreground leading-relaxed">
-                Prediksi Forex real-time menggunakan model AI hibrida terdepan. 
-                Dapatkan prakiraan EUR/USD yang akurat dengan analisis pasar komprehensif.
+                Prediksi EUR/USD yang menggunakan model 
+              </p>
+              <p className="text-xl text-muted-foreground leading-relaxed">
+                FinBERT, Longformer (Sentimen), dan Moving Average (Teknikal).
               </p>
             </div>
             
@@ -31,110 +32,76 @@ const Index = () => {
               <Button variant="premium" size="lg" asChild>
                 <Link to="/analysis" className="gap-2">
                   <BarChart3 className="h-5 w-5" />
-                  Lihat Analisis
+                  Mulai Analisis Mendalam
                   <ArrowRight className="h-4 w-4" />
                 </Link>
-              </Button>
-              <Button variant="outline" size="lg" className="gap-2">
-                <Brain className="h-5 w-5" />
-                Pelajari Lebih Lanjut
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Live Rate - Full width on mobile, 1 column on desktop */}
-          <div className="lg:col-span-1">
-            <LiveRate />
-          </div>
-          
-          {/* Quick Stats */}
-          <div className="lg:col-span-2">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <Card className="shadow-card">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    Prediksi Hari Ini
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-success">1.0863</div>
-                  <div className="text-sm text-muted-foreground">94.2% kepercayaan</div>
-                </CardContent>
-              </Card>
+      {/* ================================== */}
+      {/* Main Content & Modules */}
+      {/* ================================== */}
+      <div className="container mx-auto px-6 py-12 space-y-12">
+        
+        {/* SECTION 1: Live Rate - DIJADIKAN SATU KOLOM LEBAR */}
+        <div className="grid grid-cols-1 mb-8">
+          <LiveRate />
+        </div>
 
-              <Card className="shadow-card">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <Brain className="h-4 w-4" />
-                    Akurasi Model
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-accent">97.3%</div>
-                  <div className="text-sm text-muted-foreground">Skor MAPE</div>
-                </CardContent>
-              </Card>
+        <hr className="border-t border-border" />
+        
+        {/* SECTION 2: Prediksi dan Berita (2 Kolom) */}
+        <h2 className="text-3xl font-bold text-foreground mb-6">
+            Berita Forex dan Analisa Hari ini
+        </h2>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            {/* Kolom Kiri: Prediksi & Panduan */}
+            <div className="space-y-6">
+                <Card className="shadow-card p-6 h-full bg-card/90">
+                    <CardHeader className="p-0 mb-4">
+                        <CardTitle className="flex items-center gap-2 text-xl">
+                            <Brain className="h-5 w-5 text-primary" />
+                            Akses Model Prediksi
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0 space-y-4">
+                        <p className="text-muted-foreground">
+                            Model kami menggabungkan data Moving Average (teknikal) dengan sentimen (berita) 
+                            untuk memprediksi harga penutupan esok hari (H+1).
+                        </p>
+                        
+                        <div className="space-y-2 pt-2">
+                            <p className="text-sm font-semibold text-foreground">Komponen Analisis:</p>
+                            <Badge variant="secondary" className="mr-2">EMA 20/50 (Teknikal)</Badge>
+                            <Badge variant="secondary" className="mr-2">Sentimen Judul (FinBERT)</Badge>
+                            <Badge variant="secondary">Sentimen Konten (Longformer)</Badge>
+                        </div>
 
-              <Card className="shadow-card">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <Newspaper className="h-4 w-4" />
-                    Sentimen Pasar
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-foreground">Bullish</div>
-                  <div className="text-sm text-success">+2.1% tren</div>
-                </CardContent>
-              </Card>
+                        <Button variant="premium" className="w-full mt-4 gap-2" asChild>
+                            <Link to="/analysis">
+                                <CornerRightUp className="h-4 w-4" />
+                                Lanjutkan ke Halaman Analisis
+                            </Link>
+                        </Button>
+                    </CardContent>
+                </Card>
             </div>
-          </div>
-        </div>
+            
+            {/* Kolom Kanan: Berita Terbaru (NewsCard) */}
+            <div className="h-full">
+                {/* NewsCard sudah mencakup Card Header dan Title internalnya */}
+                <NewsCard /> 
+            </div>
 
-        {/* Predictions and News Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-          <div className="h-full">
-            <Card className="shadow-card h-full">
-              <CardHeader>
-                <CardTitle>Prediksi Terbaru</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Lihat halaman analisis untuk prediksi LSTM lengkap dengan agregasi EMA dan sentimen.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-          <NewsCard />
-        </div>
-
-        {/* Call to Action */}
-        <div className="mt-16 text-center">
-          <Card className="shadow-card bg-gradient-primary">
-            <CardContent className="p-8">
-              <h2 className="text-3xl font-bold text-primary-foreground mb-4">
-                Siap untuk Analisis yang Lebih Mendalam?
-              </h2>
-              <p className="text-primary-foreground/90 mb-6 text-lg">
-                Jelajahi perbandingan prediksi detail, akurasi historis, dan metrik lanjutan
-              </p>
-              <Button variant="outline" size="lg" asChild className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-                <Link to="/analysis" className="gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Buka Dashboard Analisis
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
         </div>
       </div>
+      
+      {/* Footer atau bagian akhir halaman */}
     </div>
   );
 };

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Calendar, TrendingUp, Target, BarChart3, Sparkles, Loader2 } from "lucide-react";
@@ -9,11 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast"; // Pastikan path ini benar untuk useToast
+import { useToast } from "@/hooks/use-toast";
 import ScrapeForm from "@/components/ScrapeFrom";
 import HistoricalDataForm from "@/components/HistoricalDataForm";
 import { PredictionCard } from "@/components/PredictionCard";
 
+// ==============================
+// 📊 Mock Data Generator
+// ==============================
 const generateMockData = (timeframe: string) => {
   const dataPoints = timeframe === "1D" ? 24 : timeframe === "7D" ? 7 : timeframe === "1M" ? 30 : 90;
   const data = [];
@@ -24,7 +26,7 @@ const generateMockData = (timeframe: string) => {
     const predicted = actual + (Math.random() - 0.5) * 0.005;
 
     data.push({
-      time: timeframe === "1D" ? `${i}:00` : `Day ${i + 1}`,
+      time: timeframe === "1D" ? `${i}:00` : `Hari ${i + 1}`,
       actual: parseFloat(actual.toFixed(4)),
       predicted: parseFloat(predicted.toFixed(4)),
     });
@@ -33,7 +35,9 @@ const generateMockData = (timeframe: string) => {
   return data;
 };
 
-// Interface SentimentAnalysis yang diperbarui sesuai dengan output fungsi Supabase Anda
+// ==============================
+// 🧩 Types
+// ==============================
 interface SentimentAnalysisResult {
   sentiment: string;
   probabilities: {
@@ -41,9 +45,7 @@ interface SentimentAnalysisResult {
     neutral: number;
     negative: number;
   };
-  // `negativeIndicators` tidak ada di skrip kedua, jadi kita hapus atau jadikan opsional
-  // negativeIndicators?: string[]; // Jadikan opsional atau hapus jika tidak digunakan
-  model?: string; // Menambahkan model dari skrip kedua
+  model?: string;
 }
 
 interface AnalysisResponse {
@@ -52,25 +54,36 @@ interface AnalysisResponse {
   errors?: string[];
 }
 
+interface HistoricalData {
+  close: number;
+  EMA20: number;
+  EMA50: number;
+}
+
+// ==============================
+// ⚙️ Main Component
+// ==============================
 const Analysis = () => {
-  const [timeframe, setTimeframe] = useState("7D");
-  const [chartData, setChartData] = useState(() => generateMockData(timeframe)); // Ganti nama `data` menjadi `chartData`
+  const [timeframe, setTimeframe] = useState("7D"); // State ini tetap ada, tapi tidak digunakan di UI
+  const [chartData, setChartData] = useState(() => generateMockData(timeframe)); 
   
-  // State untuk Analisis Sentimen (dari skrip kedua)
+  // State Sentimen
   const [titleInput, setTitleInput] = useState("");
   const [contentInput, setContentInput] = useState("");
-  const [sentimentResult, setSentimentResult] = useState<AnalysisResponse | null>(null); // Menggabungkan hasil title & content
+  const [sentimentResult, setSentimentResult] = useState<AnalysisResponse | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   
-  // State untuk Historical Data
-  const [historicalData, setHistoricalData] = useState<{ close: number; EMA20: number; EMA50: number } | null>(null);
+  // State Data Historis
+  const [historicalData, setHistoricalData] = useState<HistoricalData | null>(null);
   
   const { toast } = useToast();
 
   useEffect(() => {
+    // Fungsi ini tetap dipanggil karena 'timeframe' masih digunakan oleh generateMockData
     setChartData(generateMockData(timeframe));
   }, [timeframe]);
 
+  // Placeholder untuk logika API Sentimen
   const analyzeSentiment = async () => {
     if (!titleInput.trim() && !contentInput.trim()) {
       toast({
@@ -83,6 +96,7 @@ const Analysis = () => {
 
     setIsAnalyzing(true);
     try {
+      // Simulasi pemanggilan API/Fungsi Supabase (menggunakan kode asli)
       const { data, error } = await supabase.functions.invoke<AnalysisResponse>(
         'analyze-sentiment',
         {
@@ -93,7 +107,7 @@ const Analysis = () => {
       if (error) {
         throw error;
       }
-
+      
       setSentimentResult(data);
 
       if (data?.errors?.length) {
@@ -109,7 +123,7 @@ const Analysis = () => {
         });
       }
     } catch (error: any) {
-      console.error('Sentiment analysis error:', error);
+      console.error('Kesalahan analisis sentimen:', error);
       toast({
         title: "Error",
         description: error.message || "Gagal menganalisis sentimen. Silakan coba lagi.",
@@ -120,45 +134,24 @@ const Analysis = () => {
     }
   };
 
-  const getSentimentColor = (sentiment: string | undefined) => {
-    switch (sentiment) {
-      case "positive":
-        return "text-green-600";
-      case "negative":
-        return "text-red-600";
-      case "neutral":
-        return "text-gray-600";
-      default:
-        return "text-gray-500";
-    }
-  };
+  // =====================================
+  // 🎨 Helpers (Dibutuhkan untuk rendering kartu hasil)
+  // =====================================
 
   const getSentimentLabel = (sentiment: string | undefined) => {
     switch (sentiment) {
-      case "positive":
-        return "Positif";
-      case "negative":
-        return "Negatif";
-      case "neutral":
-        return "Netral";
-      default:
-        return "Tidak Diketahui";
+      case "positive": return "Positif";
+      case "negative": return "Negatif";
+      case "neutral": return "Netral";
+      default: return "Tidak Diketahui";
     }
   };
 
-  const formatPercentage = (value: number) => {
-    return `${(value * 100).toFixed(1)}%`;
-  };
+  const formatPercentage = (value: number) => `${(value * 100).toFixed(1)}%`;
 
   const mape = chartData.reduce((acc, point) => {
     return acc + Math.abs((point.actual - point.predicted) / point.actual);
   }, 0) / chartData.length * 100;
-
-  const timeframes = [
-    { value: "1D", label: "Harian" },
-    { value: "7D", label: "Mingguan" }, // Menambahkan 7D
-    { value: "1M", label: "Bulanan" },
-  ];
 
   const renderProbabilities = (analysis: SentimentAnalysisResult) => {
     if (!analysis?.probabilities) return null;
@@ -193,7 +186,7 @@ const Analysis = () => {
         <CardHeader className="pb-3 border-b">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
-            Hasil Analisis {type} ({analysis.model || 'Model Tidak Diketahui'})
+            Hasil Analisis {type} 
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
@@ -212,17 +205,20 @@ const Analysis = () => {
             <p className="text-sm font-semibold text-foreground">Probabilitas:</p>
             {renderProbabilities(analysis)}
           </div>
-          {/* Karena negativeIndicators tidak ada di skrip kedua, bagian ini dihapus */}
         </CardContent>
       </Card>
     );
   };
 
+  // =====================================
+  // 🧠 Render Component
+  // =====================================
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b border-border bg-gradient-card">
         <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center justify-between">
+          {/* JUDUL DIPUSATKAN DI SINI */}
+          <div className="flex items-center justify-center text-center">
             <div>
               <h1 className="text-3xl font-bold text-foreground mb-2">
                 Analisis Prediksi EUR/USD
@@ -231,24 +227,7 @@ const Analysis = () => {
                 Bandingkan prediksi Model C dengan data pasar aktual
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <Select value={timeframe} onValueChange={setTimeframe}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeframes.map((tf) => (
-                    <SelectItem key={tf.value} value={tf.value}>
-                      {tf.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button variant="outline" className="gap-2">
-                <Calendar className="h-4 w-4" />
-                Rentang Kustom
-              </Button>
-            </div>
+            {/* Bagian kanan (Timeframe & Rentang Kustom) DIHAPUS */}
           </div>
         </div>
       </div>
@@ -258,6 +237,7 @@ const Analysis = () => {
 
         <HistoricalDataForm onDataFetched={setHistoricalData} />
 
+        {/* === SENTIMENT SECTION === */}
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -310,11 +290,21 @@ const Analysis = () => {
                 </Button>
               </div>
 
+              {/* BAGIAN HASIL ANALISIS SENTIMEN (Kolom Kanan) */}
               <div className="space-y-4">
-                {sentimentResult?.title && renderSentimentResultCard('Judul', sentimentResult.title)}
-                {sentimentResult?.content && renderSentimentResultCard('Konten', sentimentResult.content)}
-
-                {!sentimentResult && (
+                {(sentimentResult?.title || sentimentResult?.content) ? (
+                  <>
+                    {sentimentResult?.title && renderSentimentResultCard("Judul", sentimentResult.title)}
+                    {sentimentResult?.content && renderSentimentResultCard("Konten", sentimentResult.content)}
+                    <div className="pt-2">
+                      <p className="text-xs text-muted-foreground italic p-3 rounded-lg bg-muted/20 border border-border/50">
+                        <strong>Catatan:</strong> Analisis sentimen menggunakan AI untuk menentukan 
+                        sentimen berdasarkan konteks. Probabilitas menunjukkan tingkat kepercayaan 
+                        untuk setiap kategori sentimen.
+                      </p>
+                    </div>
+                  </>
+                ) : (
                   <div className="h-full flex items-center justify-center p-8">
                     <div className="text-center space-y-2">
                       <Sparkles className="h-12 w-12 mx-auto text-muted-foreground/40" />
@@ -324,89 +314,12 @@ const Analysis = () => {
                     </div>
                   </div>
                 )}
-                
-                {(sentimentResult?.title || sentimentResult?.content) && (
-                  <div className="pt-2">
-                    <p className="text-xs text-muted-foreground italic p-3 rounded-lg bg-muted/20 border border-border/50">
-                      <strong>Catatan:</strong> Analisis sentimen menggunakan AI untuk menentukan 
-                      sentimen berdasarkan konteks. Probabilitas menunjukkan tingkat kepercayaan 
-                      untuk setiap kategori sentimen.
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
           </CardContent>
         </Card>
 
         <PredictionCard sentimentData={sentimentResult} historicalData={historicalData} />
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="shadow-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Target className="h-4 w-4" />
-                Akurasi Model (MAPE)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-success">
-                {mape.toFixed(2)}%
-              </div>
-              <Badge variant="secondary" className="mt-2">
-                Sangat Baik
-              </Badge>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Kurs Saat Ini
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">
-                1.0847
-              </div>
-              <div className="text-sm text-success">+0.0023 (+0.21%)</div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
-                Jumlah Prediksi
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">
-                {chartData.length}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Titik data
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Korelasi
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-success">
-                0.97
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Korelasi tinggi
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
       </div>
     </div>

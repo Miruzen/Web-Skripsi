@@ -244,7 +244,7 @@ const HistoricalDataForm = ({ onDataFetched }: HistoricalDataFormProps) => {
             ) : (
               <>
                 <TrendingUp className="h-4 w-4" />
-                Ambil Data Historis
+                Kalkulasi Data Historis
               </>
             )}
           </Button>
@@ -256,7 +256,7 @@ const HistoricalDataForm = ({ onDataFetched }: HistoricalDataFormProps) => {
             className="gap-2"
           >
             <Download className="h-4 w-4" />
-            Download Data
+            Download Hasil
           </Button>
         </div>
 
