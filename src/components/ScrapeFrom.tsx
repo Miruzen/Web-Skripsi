@@ -149,7 +149,7 @@ export default function ScrapeForm() {
               className="gap-2"
             >
               <Download className="h-4 w-4" />
-              Download
+              Download JSON
             </Button>
           </div>
         </form>

@@ -14,7 +14,7 @@ serve(async (req) => {
 
   try {
     // ✅ URL diperbaiki: Hapus koma di akhir dan pastikan hanya EUR yang diminta
-    const url = `https://api.forexrateapi.com/v1/latest?api_key=0b066fbc7db8b3eb0b8583107dde077c&base=USD&currencies=EUR`;
+    const url = `https://api.forexrateapi.com/v1/latest?api_key=0b066fbc7db8b3eb0b8583107dde077c&base=EUR&currencies=USD`;
 
     const apiResponse = await fetch(url);
     const apiBody = await apiResponse.json();
@@ -24,7 +24,7 @@ serve(async (req) => {
     }
 
     // ✅ LANGKAH KRITIS: Ekstrak nilai rate EUR dari objek 'rates'
-    const eurRate = apiBody?.rates?.EUR;
+    const eurRate = apiBody?.rates?.USD;
 
     if (typeof eurRate !== 'number') {
         throw new Error("Data EUR/USD tidak valid atau tidak ditemukan.");

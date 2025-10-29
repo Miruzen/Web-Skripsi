@@ -33,7 +33,7 @@ const Index = () => {
               <Button variant="premium" size="lg" asChild>
                 <Link to="/analysis" className="gap-2">
                   <BarChart3 className="h-5 w-5" />
-                  Mulai Analisis Mendalam
+                  Mulai Analisa Prediksi
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>

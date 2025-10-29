@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Brain, Activity, Database, Newspaper } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -49,8 +49,6 @@ const Analysis = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [titleInput, setTitleInput] = useState("");
   const [contentInput, setContentInput] = useState("");
-
-  // Data historis dan tanggal
   const [historicalData, setHistoricalData] = useState<HistoricalData | null>(null);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -64,7 +62,7 @@ const Analysis = () => {
     if (!titleInput.trim() && !contentInput.trim()) {
       toast({
         title: "Input Dibutuhkan",
-        description: "Masukkan judul atau konten untuk dianalisis.",
+        description: "Masukkan judul atau konten berita untuk dianalisis.",
         variant: "destructive",
       });
       return;
@@ -79,8 +77,6 @@ const Analysis = () => {
         }
       );
 
-      console.log("📊 Hasil Analisis Sentimen:", data);
-
       if (error) throw error;
       setSentimentResult(data);
 
@@ -89,7 +85,6 @@ const Analysis = () => {
         description: "Sentimen berhasil dianalisis menggunakan model FinBERT/LongFormer.",
       });
     } catch (error: any) {
-      console.error("❌ Kesalahan analisis sentimen:", error);
       toast({
         title: "Error",
         description: error.message || "Gagal menganalisis sentimen.",
@@ -101,7 +96,7 @@ const Analysis = () => {
   };
 
   // ==============================
-  // 🧭 Helper Rendering Sentimen
+  // 🧭 Helper Rendering
   // ==============================
   const getSentimentLabel = (sentiment?: string) => {
     switch (sentiment) {
@@ -138,96 +133,117 @@ const Analysis = () => {
     );
   };
 
-  const renderSentimentResultCard = (
-    type: "Judul" | "Konten",
-    analysis: SentimentAnalysisResult | null
-  ) => {
-    if (!analysis) return null;
-
-    return (
-      <Card className="border-2 shadow-lg bg-gradient-to-br from-card to-card/80">
-        <CardHeader className="pb-3 border-b">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            Hasil Analisis {type}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 pt-4">
-          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-            <span className="text-sm font-medium text-muted-foreground">Sentimen:</span>
-            <Badge
-              variant={
-                analysis.sentiment === "positive"
-                  ? "default"
-                  : analysis.sentiment === "negative"
-                  ? "destructive"
-                  : "secondary"
-              }
-              className="px-3 py-1"
-            >
-              {getSentimentLabel(analysis.sentiment)}
-            </Badge>
-          </div>
-
-          <div className="space-y-3 p-3 rounded-lg bg-muted/20">
-            <p className="text-sm font-semibold text-foreground">Probabilitas:</p>
-            {renderProbabilities(analysis)}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
   // ==============================
-  // ⚙️ Render Component
+  // ⚙️ Render
   // ==============================
   return (
     <div className="min-h-screen bg-background">
       {/* ===== HEADER ===== */}
       <div className="border-b border-border bg-gradient-card">
-        <div className="container mx-auto px-6 py-8 text-center">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+        <div className="container mx-auto px-6 py-10 text-center space-y-4">
+          <h1 className="text-4xl font-bold text-foreground">
             Analisis Prediksi EUR/USD
           </h1>
-          <p className="text-muted-foreground">
-            Gunakan model analitik untuk memahami sentimen pasar dan tren teknikal EUR/USD
+          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+            Analisis menggunakan data historis, analisis berita, dan model prediktif 
+            berbasis <span className="font-semibold text-primary">FinBERT</span>,{" "}
+            <span className="font-semibold text-primary">Longformer</span>, dan{" "}
+            <span className="font-semibold text-primary">LSTM</span>.
           </p>
         </div>
       </div>
 
-      {/* ===== BODY CONTENT ===== */}
-      <div className="container mx-auto px-6 py-8 space-y-8">
-        <ScrapeForm />
+      {/* ===== MAIN BODY ===== */}
+      <div className="container mx-auto px-6 py-10 space-y-10">
 
-        {/* 🧾 Data Historis */}
-        <HistoricalDataForm
-          onDataFetched={(data: any) => {
-            setHistoricalData(data);
-            if (data?.startDate && data?.endDate) {
-              setStartDate(new Date(data.startDate));
-              setEndDate(new Date(data.endDate));
-            }
-          }}
-        />
-
-        {/* 💬 Analisis Sentimen */}
-        <Card className="shadow-card">
+        {/* 📘 Intro Informasi Singkat */}
+        <Card className="bg-card/70 shadow-lg border-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5" />
-              Analisis Sentimen
+              <Brain className="h-5 w-5 text-primary" />
+              Tentang Analisis Ini
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="text-muted-foreground leading-relaxed space-y-2">
+            <p>
+              Sistem ini menggabungkan 3 pendekatan utama:
+            </p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>
+                <b>Scraping Berita:</b> Mengambil berita finansial terkini secara otomatis untuk bahan analisis berita.
+              </li>
+              <li>
+                <b>Mood Series:</b> Mengukur suasana pasar berdasarkan rata-rata skor sentimen harian dari berita.
+              </li>
+              <li>
+                <b>Model LSTM:</b> Menggunakan data teknikal & sentimen untuk memprediksi pergerakan harga EUR/USD berikutnya.
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        {/* 🧾 Step 1: Ambil Data Berita */}
+        <Card className="shadow-card border-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Newspaper className="h-5 w-5 text-primary" />
+              Langkah 1 — Ambil Berita Terkini
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Gunakan form ini untuk melakukan <b>scraping berita Forex</b> dari sumber data.
+              Sistem akan menyiapkan data berita untuk dianalisa
+            </p>
+            <ScrapeForm />
+          </CardContent>
+        </Card>
+
+        {/* 📈 Step 2: Data Historis */}
+        <Card className="shadow-card border-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5 text-primary" />
+              Langkah 2 — Ambil Data Historis
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Tentukan rentang tanggal untuk mengambil data historis EUR/USD,
+              yang akan digunakan untuk menghitung <b>EMA20</b> dan <b>EMA50</b>.
+            </p>
+            <HistoricalDataForm
+              onDataFetched={(data: any) => {
+                setHistoricalData(data);
+                if (data?.startDate && data?.endDate) {
+                  setStartDate(new Date(data.startDate));
+                  setEndDate(new Date(data.endDate));
+                }
+              }}
+            />
+          </CardContent>
+        </Card>
+
+        {/* 💬 Step 3: Analisis Sentimen */}
+        <Card className="shadow-card border-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Langkah 3 — Analisis Sentimen Berita
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Masukkan judul atau isi berita Forex untuk melihat hasil analisis berita
+              berdasarkan model <b>FinBERT</b> dan <b>Longformer</b>.
+            </p>
+            {/* === form input + hasil === */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* === INPUT === */}
+              {/* Input */}
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="title" className="text-sm font-semibold">
-                    Judul
-                  </Label>
+                  <Label>Judul</Label>
                   <Input
-                    id="title"
                     placeholder="Masukkan judul berita..."
                     value={titleInput}
                     onChange={(e) => setTitleInput(e.target.value)}
@@ -235,11 +251,8 @@ const Analysis = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="content" className="text-sm font-semibold">
-                    Konten
-                  </Label>
+                  <Label>Konten</Label>
                   <Textarea
-                    id="content"
                     placeholder="Masukkan isi berita..."
                     value={contentInput}
                     onChange={(e) => setContentInput(e.target.value)}
@@ -247,43 +260,40 @@ const Analysis = () => {
                     disabled={isAnalyzing}
                   />
                 </div>
-
-                <Button
-                  onClick={analyzeSentiment}
-                  disabled={isAnalyzing}
-                  className="w-full gap-2"
-                >
+                <Button onClick={analyzeSentiment} disabled={isAnalyzing} className="w-full gap-2">
                   {isAnalyzing ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Menganalisis...
+                      <Loader2 className="h-4 w-4 animate-spin" /> Menganalisis...
                     </>
                   ) : (
                     <>
-                      <Sparkles className="h-4 w-4" />
-                      Analisis Sentimen
+                      <Sparkles className="h-4 w-4" /> Analisis Berita
                     </>
                   )}
                 </Button>
               </div>
 
-              {/* === HASIL === */}
+              {/* Hasil */}
               <div className="space-y-4">
-                {sentimentResult?.title || sentimentResult?.content ? (
+                {sentimentResult ? (
                   <>
-                    {sentimentResult?.title &&
-                      renderSentimentResultCard("Judul", sentimentResult.title)}
-                    {sentimentResult?.content &&
-                      renderSentimentResultCard("Konten", sentimentResult.content)}
+                    {sentimentResult.title && (
+                      <Card className="p-3">
+                        <p className="font-semibold mb-1">Hasil Analisis Judul</p>
+                        {renderProbabilities(sentimentResult.title)}
+                      </Card>
+                    )}
+                    {sentimentResult.content && (
+                      <Card className="p-3">
+                        <p className="font-semibold mb-1">Hasil Analisis Konten</p>
+                        {renderProbabilities(sentimentResult.content)}
+                      </Card>
+                    )}
                   </>
                 ) : (
-                  <div className="h-full flex items-center justify-center p-8">
-                    <div className="text-center space-y-2">
-                      <Sparkles className="h-10 w-10 mx-auto text-muted-foreground/40" />
-                      <p className="text-sm text-muted-foreground">
-                        Hasil analisis akan muncul di sini.
-                      </p>
-                    </div>
+                  <div className="text-center text-muted-foreground py-10">
+                    <Sparkles className="h-8 w-8 mx-auto mb-3 opacity-60" />
+                    Hasil akan muncul di sini setelah analisis dilakukan.
                   </div>
                 )}
               </div>
@@ -291,14 +301,11 @@ const Analysis = () => {
           </CardContent>
         </Card>
 
-        {/* 🎯 Mood Series Chart */}
+        {/* 📊 Step 4: Mood Series */}
         <MoodSeriesChart startDate={startDate ?? undefined} endDate={endDate ?? undefined} />
 
-        {/* 🔮 LSTM Prediction */}
-        <PredictionCard
-          sentimentData={sentimentResult}
-          historicalData={historicalData}
-        />
+        {/* 🔮 Step 5: Prediksi Akhir (LSTM) */}
+        <PredictionCard sentimentData={sentimentResult} historicalData={historicalData} />
       </div>
     </div>
   );

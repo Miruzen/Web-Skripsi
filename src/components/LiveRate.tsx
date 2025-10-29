@@ -68,10 +68,10 @@ const LiveRate = () => {
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-accent" />
-            Kurs EUR/USD Langsung
+            Kurs EUR/USD Langsung (Dalam mata Uang $Dollar)
           </span>
           <Badge variant="outline" className="text-accent border-accent/50 animate-pulse">
-            LANGSUNG
+            Live
           </Badge>
         </CardTitle>
       </CardHeader>
