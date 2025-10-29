@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Brain, Newspaper, BarChart3, ArrowRight, CornerRightUp } from "lucide-react";
 import { Link } from "react-router-dom";
+import PredictionTabs from "@/components/PredictionTabs";
 
 const Index = () => {
   return (
@@ -54,51 +55,20 @@ const Index = () => {
         <hr className="border-t border-border" />
         
         {/* SECTION 2: Prediksi dan Berita (2 Kolom) */}
-        <h2 className="text-3xl font-bold text-foreground mb-6">
+          <h2 className="text-3xl font-bold text-foreground mb-6">
             Berita Forex dan Analisa Hari ini
-        </h2>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
-            {/* Kolom Kiri: Prediksi & Panduan */}
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Kolom Kiri: Model Prediksi Interaktif */}
             <div className="space-y-6">
-                <Card className="shadow-card p-6 h-full bg-card/90">
-                    <CardHeader className="p-0 mb-4">
-                        <CardTitle className="flex items-center gap-2 text-xl">
-                            <Brain className="h-5 w-5 text-primary" />
-                            Akses Model Prediksi
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0 space-y-4">
-                        <p className="text-muted-foreground">
-                            Model kami menggabungkan data Moving Average (teknikal) dengan sentimen (berita) 
-                            untuk memprediksi harga penutupan esok hari (H+1).
-                        </p>
-                        
-                        <div className="space-y-2 pt-2">
-                            <p className="text-sm font-semibold text-foreground">Komponen Analisis:</p>
-                            <Badge variant="secondary" className="mr-2">EMA 20/50 (Teknikal)</Badge>
-                            <Badge variant="secondary" className="mr-2">Sentimen Judul (FinBERT)</Badge>
-                            <Badge variant="secondary">Sentimen Konten (Longformer)</Badge>
-                        </div>
-
-                        <Button variant="premium" className="w-full mt-4 gap-2" asChild>
-                            <Link to="/analysis">
-                                <CornerRightUp className="h-4 w-4" />
-                                Lanjutkan ke Halaman Analisis
-                            </Link>
-                        </Button>
-                    </CardContent>
-                </Card>
+              <PredictionTabs />
             </div>
-            
             {/* Kolom Kanan: Berita Terbaru (NewsCard) */}
             <div className="h-full">
-                {/* NewsCard sudah mencakup Card Header dan Title internalnya */}
-                <NewsCard /> 
+              {/* NewsCard sudah mencakup Card Header dan Title internalnya */}
+              <NewsCard />
             </div>
-
-        </div>
+          </div>
       </div>
       
       {/* Footer atau bagian akhir halaman */}

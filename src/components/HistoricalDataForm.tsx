@@ -259,7 +259,7 @@ const HistoricalDataForm = ({ onDataFetched }: HistoricalDataFormProps) => {
           </Button>
 
           <Button onClick={downloadExcel} disabled={!summary || !analyze} variant="outline" className="gap-2">
-            <Download className="h-4 w-4" /> Download CSV
+            <Download className="h-4 w-4" /> Download Excel
           </Button>
         </div>
 

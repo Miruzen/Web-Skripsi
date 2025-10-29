@@ -124,7 +124,7 @@ const NewsCard = () => {
           Berita Forex Terbaru
         </CardTitle>
         <p className="text-muted-foreground">
-          Data diambil langsung dari sumber terpercaya (Investing.com)
+          Data diambil langsung dari sumber terpercaya (Investing.com dan DailyForex.com)
         </p>
       </CardHeader>
       <CardContent>

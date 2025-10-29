@@ -4,7 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Activity, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -28,6 +37,8 @@ const MoodSeriesChart = ({ startDate, endDate }: MoodSeriesChartProps) => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<MoodSeriesRecord[]>([]);
 
+  // Jika pakai custom → ambil tanggal custom
+  // Jika tidak → pakai tanggal dari historical form
   const effectiveStart = useCustom ? customStart : startDate;
   const effectiveEnd = useCustom ? customEnd : endDate;
 
@@ -54,7 +65,14 @@ const MoodSeriesChart = ({ startDate, endDate }: MoodSeriesChartProps) => {
       if (!response.ok) throw new Error("Gagal mengambil data Mood Series");
       const result = await response.json();
       console.log("✅ Hasil Mood Series:", result);
-      setData(result);
+
+      const formatted = (result.data || []).map((item: any) => ({
+        ...item,
+        date: new Date(item.date).toISOString().split("T")[0],
+      }));
+
+      console.log("📊 Data Siap Render:", formatted);
+      setData(formatted);
     } catch (err: any) {
       console.error("❌ Gagal mengambil Mood Series:", err);
       toast({
@@ -67,12 +85,12 @@ const MoodSeriesChart = ({ startDate, endDate }: MoodSeriesChartProps) => {
     }
   };
 
+  // Auto-fetch ketika tanggal historis berubah (jika tidak pakai custom)
   useEffect(() => {
-  if (startDate && endDate) {
-    fetchMoodSeries();
-  }
-}, [startDate, endDate, useCustom]);
-
+    if (!useCustom && startDate && endDate) {
+      fetchMoodSeries();
+    }
+  }, [startDate, endDate, useCustom]);
 
   return (
     <Card className="shadow-card border-2">
@@ -82,22 +100,16 @@ const MoodSeriesChart = ({ startDate, endDate }: MoodSeriesChartProps) => {
           Mood Series Analysis
         </CardTitle>
       </CardHeader>
+
       <CardContent className="space-y-6">
         {/* ====== Pilihan Mode ====== */}
         <div className="flex flex-wrap gap-3 items-center">
-          <Button
-            variant={!useCustom ? "default" : "outline"}
-            onClick={() => setUseCustom(false)}
-            className="gap-2"
-          >
-            📈 Ikuti Tanggal Historis
-          </Button>
           <Button
             variant={useCustom ? "default" : "outline"}
             onClick={() => setUseCustom(true)}
             className="gap-2"
           >
-            📅 Gunakan Custom Range
+            📅 Masukan Tanggalnya
           </Button>
         </div>
 
@@ -190,6 +202,7 @@ const MoodSeriesChart = ({ startDate, endDate }: MoodSeriesChartProps) => {
                 dataKey="mood_score"
                 stroke="hsl(var(--primary))"
                 strokeWidth={2}
+                dot={false} // 💡 Tidak tampilkan titik
                 name="Mood Score"
               />
               <Line
@@ -198,6 +211,7 @@ const MoodSeriesChart = ({ startDate, endDate }: MoodSeriesChartProps) => {
                 dataKey="close"
                 stroke="hsl(var(--accent))"
                 strokeWidth={2}
+                dot={false} // 💡 Tidak tampilkan titik
                 name="Harga EUR/USD"
               />
             </LineChart>
