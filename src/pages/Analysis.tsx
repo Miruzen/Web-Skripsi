@@ -115,19 +115,33 @@ const Analysis = () => {
 
   const renderProbabilities = (analysis: SentimentAnalysisResult) => {
     const { positive, neutral, negative } = analysis.probabilities;
+    const maxValue = Math.max(positive, neutral, negative);
+    
     return (
-      <div className="grid grid-cols-3 gap-2 text-sm mt-2">
-        <div className="flex flex-col items-center p-2 rounded-md bg-green-50/50">
-          <span className="font-semibold text-green-700">Positif</span>
-          <span>{formatPercentage(positive)}</span>
+      <div className="grid grid-cols-3 gap-3 text-sm mt-2">
+        <div className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
+          positive === maxValue 
+            ? 'bg-green-500/20 border-green-500/50 scale-105' 
+            : 'bg-card border-border'
+        }`}>
+          <span className="font-semibold text-green-600">😊 Positif</span>
+          <span className="text-2xl font-bold mt-1">{formatPercentage(positive)}</span>
         </div>
-        <div className="flex flex-col items-center p-2 rounded-md bg-gray-50/50">
-          <span className="font-semibold text-gray-700">Netral</span>
-          <span>{formatPercentage(neutral)}</span>
+        <div className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
+          neutral === maxValue 
+            ? 'bg-gray-500/20 border-gray-500/50 scale-105' 
+            : 'bg-card border-border'
+        }`}>
+          <span className="font-semibold text-gray-600">😐 Netral</span>
+          <span className="text-2xl font-bold mt-1">{formatPercentage(neutral)}</span>
         </div>
-        <div className="flex flex-col items-center p-2 rounded-md bg-red-50/50">
-          <span className="font-semibold text-red-700">Negatif</span>
-          <span>{formatPercentage(negative)}</span>
+        <div className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
+          negative === maxValue 
+            ? 'bg-red-500/20 border-red-500/50 scale-105' 
+            : 'bg-card border-border'
+        }`}>
+          <span className="font-semibold text-red-600">😟 Negatif</span>
+          <span className="text-2xl font-bold mt-1">{formatPercentage(negative)}</span>
         </div>
       </div>
     );
@@ -139,16 +153,18 @@ const Analysis = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* ===== HEADER ===== */}
-      <div className="border-b border-border bg-gradient-card">
-        <div className="container mx-auto px-6 py-10 text-center space-y-4">
-          <h1 className="text-4xl font-bold text-foreground">
-            Analisis Prediksi EUR/USD
+      <div className="border-b border-border bg-gradient-to-br from-primary/5 via-background to-primary/10">
+        <div className="container mx-auto px-6 py-12 text-center space-y-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
+            <Brain className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-primary">Analisis Prediktif EUR/USD</span>
+          </div>
+          <h1 className="text-5xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+            Prediksi Harga EUR/USD
           </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-            Analisis menggunakan data historis, analisis berita, dan model prediktif 
-            berbasis <span className="font-semibold text-primary">FinBERT</span>,{" "}
-            <span className="font-semibold text-primary">Longformer</span>, dan{" "}
-            <span className="font-semibold text-primary">LSTM</span>.
+          <p className="text-muted-foreground max-w-3xl mx-auto text-lg leading-relaxed">
+            Platform analisis cerdas yang menggabungkan data historis, sentimen berita, 
+            dan kecerdasan buatan untuk memprediksi pergerakan mata uang.
           </p>
         </div>
       </div>
@@ -157,61 +173,93 @@ const Analysis = () => {
       <div className="container mx-auto px-6 py-10 space-y-10">
 
         {/* 📘 Intro Informasi Singkat */}
-        <Card className="bg-card/70 shadow-lg border-2">
+        <Card className="bg-gradient-to-br from-primary/5 to-background shadow-card border-2 border-primary/10">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5 text-primary" />
-              Tentang Analisis Ini
+            <CardTitle className="flex items-center gap-3 text-2xl">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Brain className="h-6 w-6 text-primary" />
+              </div>
+              Cara Kerja Sistem
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-muted-foreground leading-relaxed space-y-2">
-            <p>
-              Sistem ini menggabungkan 3 pendekatan utama:
+          <CardContent className="space-y-6">
+            <p className="text-muted-foreground text-base leading-relaxed">
+              Platform ini menggunakan teknologi canggih untuk memberikan prediksi yang akurat:
             </p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>
-                <b>Scraping Berita:</b> Mengambil berita finansial terkini secara otomatis untuk bahan analisis berita.
-              </li>
-              <li>
-                <b>Mood Series:</b> Mengukur suasana pasar berdasarkan rata-rata skor sentimen harian dari berita.
-              </li>
-              <li>
-                <b>Model LSTM:</b> Menggunakan data teknikal & sentimen untuk memprediksi pergerakan harga EUR/USD berikutnya.
-              </li>
-            </ul>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl bg-card border-2 border-border hover:border-primary/30 transition-colors">
+                <div className="flex items-center gap-2 mb-2">
+                  <Newspaper className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold">1. Berita Terkini</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Mengambil berita forex terbaru untuk analisis sentimen pasar.
+                </p>
+              </div>
+              <div className="p-4 rounded-xl bg-card border-2 border-border hover:border-primary/30 transition-colors">
+                <div className="flex items-center gap-2 mb-2">
+                  <Activity className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold">2. Data Historis</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Menganalisis pergerakan harga dan indikator teknikal EMA.
+                </p>
+              </div>
+              <div className="p-4 rounded-xl bg-card border-2 border-border hover:border-primary/30 transition-colors">
+                <div className="flex items-center gap-2 mb-2">
+                  <Brain className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold">3. Prediksi AI</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Menggabungkan semua data untuk prediksi harga masa depan.
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         {/* 🧾 Step 1: Ambil Data Berita */}
-        <Card className="shadow-card border-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Newspaper className="h-5 w-5 text-primary" />
-              Langkah 1 — Ambil Berita Terkini
-            </CardTitle>
+        <Card className="shadow-card border-2 hover:border-primary/30 transition-colors">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold text-lg">
+                1
+              </div>
+              <div>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Newspaper className="h-5 w-5 text-primary" />
+                  Ambil Berita Forex Terkini
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Kumpulkan berita forex terbaru untuk analisis sentimen
+                </p>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Gunakan form ini untuk melakukan <b>scraping berita Forex</b> dari sumber data.
-              Sistem akan menyiapkan data berita untuk dianalisa
-            </p>
+          <CardContent className="pt-6">
             <ScrapeForm />
           </CardContent>
         </Card>
 
         {/* 📈 Step 2: Data Historis */}
-        <Card className="shadow-card border-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5 text-primary" />
-              Langkah 2 — Ambil Data Historis
-            </CardTitle>
+        <Card className="shadow-card border-2 hover:border-primary/30 transition-colors">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold text-lg">
+                2
+              </div>
+              <div>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Database className="h-5 w-5 text-primary" />
+                  Ambil Data Historis & Grafik
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Pilih rentang tanggal untuk melihat pergerakan harga dan indikator EMA
+                </p>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Tentukan rentang tanggal untuk mengambil data historis EUR/USD,
-              yang akan digunakan untuk menghitung <b>EMA20</b> dan <b>EMA50</b>.
-            </p>
+          <CardContent className="pt-6">
             <HistoricalDataForm
               onDataFetched={(data: any) => {
                 setHistoricalData(data);
@@ -225,39 +273,47 @@ const Analysis = () => {
         </Card>
 
         {/* 💬 Step 3: Analisis Sentimen */}
-        <Card className="shadow-card border-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              Langkah 3 — Analisis Sentimen Berita
-            </CardTitle>
+        <Card className="shadow-card border-2 hover:border-primary/30 transition-colors">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold text-lg">
+                3
+              </div>
+              <div>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  Analisis Sentimen Berita
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Uji sentimen berita untuk mengetahui mood pasar (positif, netral, atau negatif)
+                </p>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Masukkan judul atau isi berita Forex untuk melihat hasil analisis berita
-              berdasarkan model <b>FinBERT</b> dan <b>Longformer</b>.
-            </p>
+          <CardContent className="pt-6">
             {/* === form input + hasil === */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Input */}
               <div className="space-y-4">
                 <div>
-                  <Label>Judul</Label>
+                  <Label className="text-base font-semibold">Judul Berita</Label>
                   <Input
-                    placeholder="Masukkan judul berita..."
+                    placeholder="Contoh: EUR/USD Melonjak Setelah Data Ekonomi AS..."
                     value={titleInput}
                     onChange={(e) => setTitleInput(e.target.value)}
                     disabled={isAnalyzing}
+                    className="mt-2"
                   />
                 </div>
                 <div>
-                  <Label>Konten</Label>
+                  <Label className="text-base font-semibold">Isi Berita</Label>
                   <Textarea
-                    placeholder="Masukkan isi berita..."
+                    placeholder="Masukkan konten lengkap berita forex yang ingin dianalisis..."
                     value={contentInput}
                     onChange={(e) => setContentInput(e.target.value)}
                     rows={8}
                     disabled={isAnalyzing}
+                    className="mt-2"
                   />
                 </div>
                 <Button onClick={analyzeSentiment} disabled={isAnalyzing} className="w-full gap-2">
@@ -276,24 +332,31 @@ const Analysis = () => {
               {/* Hasil */}
               <div className="space-y-4">
                 {sentimentResult ? (
-                  <>
-                    {sentimentResult.title && (
-                      <Card className="p-3">
-                        <p className="font-semibold mb-1">Hasil Analisis Judul</p>
-                        {renderProbabilities(sentimentResult.title)}
-                      </Card>
-                    )}
-                    {sentimentResult.content && (
-                      <Card className="p-3">
-                        <p className="font-semibold mb-1">Hasil Analisis Konten</p>
-                        {renderProbabilities(sentimentResult.content)}
-                      </Card>
-                    )}
-                  </>
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20">
+                      <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                        Hasil Analisis
+                      </h3>
+                      {sentimentResult.title && (
+                        <div className="mb-4">
+                          <p className="font-medium mb-2 text-sm text-muted-foreground">📰 Sentimen Judul</p>
+                          {renderProbabilities(sentimentResult.title)}
+                        </div>
+                      )}
+                      {sentimentResult.content && (
+                        <div>
+                          <p className="font-medium mb-2 text-sm text-muted-foreground">📄 Sentimen Konten</p>
+                          {renderProbabilities(sentimentResult.content)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 ) : (
-                  <div className="text-center text-muted-foreground py-10">
-                    <Sparkles className="h-8 w-8 mx-auto mb-3 opacity-60" />
-                    Hasil akan muncul di sini setelah analisis dilakukan.
+                  <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 px-6 rounded-lg border-2 border-dashed border-border">
+                    <Sparkles className="h-12 w-12 mb-4 opacity-40" />
+                    <p className="font-medium">Hasil Analisis Akan Muncul Di Sini</p>
+                    <p className="text-sm mt-2">Masukkan teks berita dan klik tombol analisis</p>
                   </div>
                 )}
               </div>
@@ -302,10 +365,35 @@ const Analysis = () => {
         </Card>
 
         {/* 📊 Step 4: Mood Series */}
-        <MoodSeriesChart startDate={startDate ?? undefined} endDate={endDate ?? undefined} />
+        <Card className="shadow-card border-2 hover:border-primary/30 transition-colors">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold text-lg">
+                4
+              </div>
+              <div>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Activity className="h-5 w-5 text-primary" />
+                  Grafik Mood Pasar
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Visualisasi suasana pasar berdasarkan sentimen berita harian
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <MoodSeriesChart startDate={startDate ?? undefined} endDate={endDate ?? undefined} />
+          </CardContent>
+        </Card>
 
         {/* 🔮 Step 5: Prediksi Akhir (LSTM) */}
-        <PredictionCard sentimentData={sentimentResult} historicalData={historicalData} />
+        <div className="relative">
+          <div className="absolute -top-6 left-6 flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold text-lg z-10 shadow-lg">
+            5
+          </div>
+          <PredictionCard sentimentData={sentimentResult} historicalData={historicalData} />
+        </div>
       </div>
     </div>
   );

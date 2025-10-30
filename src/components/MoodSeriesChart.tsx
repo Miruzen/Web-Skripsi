@@ -93,137 +93,176 @@ const MoodSeriesChart = ({ startDate, endDate }: MoodSeriesChartProps) => {
   }, [startDate, endDate, useCustom]);
 
   return (
-    <Card className="shadow-card border-2">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Activity className="h-5 w-5 text-primary" />
-          Mood Series Analysis
-        </CardTitle>
-      </CardHeader>
-
-      <CardContent className="space-y-6">
-        {/* ====== Pilihan Mode ====== */}
-        <div className="flex flex-wrap gap-3 items-center">
+    <div className="space-y-6">
+      {/* ====== Pilihan Mode ====== */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <p className="text-sm text-muted-foreground">
+          Gunakan tanggal dari data historis (Langkah 2) atau pilih periode khusus:
+        </p>
+        <Button
+          variant={useCustom ? "default" : "outline"}
+          onClick={() => setUseCustom(true)}
+          size="sm"
+          className="gap-2"
+        >
+          📅 Pilih Tanggal Kustom
+        </Button>
+        {useCustom && (
           <Button
-            variant={useCustom ? "default" : "outline"}
-            onClick={() => setUseCustom(true)}
-            className="gap-2"
+            variant="ghost"
+            onClick={() => setUseCustom(false)}
+            size="sm"
           >
-            📅 Masukan Tanggalnya
+            Gunakan Data Langkah 2
           </Button>
-        </div>
+        )}
+      </div>
 
         {/* ====== Custom Range Picker ====== */}
         {useCustom && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !customStart && "text-muted-foreground"
-                  )}
-                >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  {customStart ? format(customStart, "PPP") : "Pilih tanggal mulai"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={customStart}
-                  onSelect={setCustomStart}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+          <div className="p-4 rounded-lg bg-muted/30 border-2 border-dashed border-border space-y-4">
+            <p className="text-sm font-medium">Pilih Rentang Tanggal Kustom</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !customStart && "text-muted-foreground"
+                    )}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {customStart ? format(customStart, "PPP") : "Tanggal Mulai"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={customStart}
+                    onSelect={setCustomStart}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
 
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !customEnd && "text-muted-foreground"
-                  )}
-                >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  {customEnd ? format(customEnd, "PPP") : "Pilih tanggal akhir"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={customEnd}
-                  onSelect={setCustomEnd}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-
-            <div className="md:col-span-2 flex justify-end">
-              <Button
-                onClick={fetchMoodSeries}
-                disabled={!customStart || !customEnd || loading}
-                className="gap-2"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Memuat Data...
-                  </>
-                ) : (
-                  <>
-                    <Activity className="h-4 w-4" /> Lihat Grafik
-                  </>
-                )}
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !customEnd && "text-muted-foreground"
+                    )}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {customEnd ? format(customEnd, "PPP") : "Tanggal Akhir"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={customEnd}
+                    onSelect={setCustomEnd}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
+
+            <Button
+              onClick={fetchMoodSeries}
+              disabled={!customStart || !customEnd || loading}
+              className="w-full gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Memuat Data...
+                </>
+              ) : (
+                <>
+                  <Activity className="h-4 w-4" /> Tampilkan Grafik
+                </>
+              )}
+            </Button>
           </div>
         )}
 
         {/* ====== Chart Section ====== */}
         {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="flex flex-col items-center justify-center py-16 rounded-lg border-2 border-dashed border-border">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Memuat data mood series...</p>
           </div>
         ) : data.length > 0 ? (
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis yAxisId="left" orientation="left" />
-              <YAxis yAxisId="right" orientation="right" />
-              <Tooltip />
-              <Legend />
-              <Line
-                yAxisId="left"
-                type="monotone"
-                dataKey="mood_score"
-                stroke="hsl(var(--primary))"
-                strokeWidth={2}
-                dot={false} // 💡 Tidak tampilkan titik
-                name="Mood Score"
-              />
-              <Line
-                yAxisId="right"
-                type="monotone"
-                dataKey="close"
-                stroke="hsl(var(--accent))"
-                strokeWidth={2}
-                dot={false} // 💡 Tidak tampilkan titik
-                name="Harga EUR/USD"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="p-4 rounded-lg bg-gradient-to-br from-primary/5 to-background border-2 border-primary/10">
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="hsl(var(--muted-foreground))"
+                  style={{ fontSize: '12px' }}
+                />
+                <YAxis 
+                  yAxisId="left" 
+                  orientation="left" 
+                  stroke="hsl(var(--primary))"
+                  style={{ fontSize: '12px' }}
+                  label={{ value: 'Mood Score', angle: -90, position: 'insideLeft' }}
+                />
+                <YAxis 
+                  yAxisId="right" 
+                  orientation="right" 
+                  stroke="hsl(var(--accent))"
+                  style={{ fontSize: '12px' }}
+                  label={{ value: 'Harga (USD)', angle: 90, position: 'insideRight' }}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Legend />
+                <Line
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="mood_score"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={3}
+                  dot={false}
+                  name="📊 Mood Score"
+                />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="close"
+                  stroke="hsl(var(--accent))"
+                  strokeWidth={3}
+                  dot={false}
+                  name="💰 Harga EUR/USD"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+            <p className="text-xs text-muted-foreground text-center mt-4">
+              📈 Grafik menampilkan korelasi antara sentimen berita (mood score) dan pergerakan harga EUR/USD
+            </p>
+          </div>
         ) : (
-          <p className="text-center text-muted-foreground py-6">
-            📅 Pilih rentang tanggal terlebih dahulu untuk melihat grafik Mood Series.
-          </p>
+          <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-16 px-6 rounded-lg border-2 border-dashed border-border">
+            <Activity className="h-12 w-12 mb-4 opacity-40" />
+            <p className="font-medium">Belum Ada Data Grafik</p>
+            <p className="text-sm mt-2">
+              {useCustom 
+                ? "Pilih rentang tanggal dan klik tombol 'Tampilkan Grafik'" 
+                : "Ambil data historis di Langkah 2 terlebih dahulu"}
+            </p>
+          </div>
         )}
-      </CardContent>
-    </Card>
-  );
-};
+      </div>
+    );
+  };
 
 export default MoodSeriesChart;

@@ -85,19 +85,10 @@ const generatePrediction = async () => {
     const contentSentiment = calculateSentimentScore(sentimentData.content);
     const compositeSentiment = (titleSentiment + contentSentiment) / 2;
 
-    // Ambil data EMA & harga dari struktur baru
-    const ema20 =
-      historicalData?.summary?.EMA20 ||
-      historicalData?.ema20 ||
-      historicalData?.EMA20;
-    const ema50 =
-      historicalData?.summary?.EMA50 ||
-      historicalData?.ema50 ||
-      historicalData?.EMA50;
-    const current_close =
-      historicalData?.summary?.close ||
-      historicalData?.close ||
-      historicalData?.chart_data?.close?.slice(-1)?.[0];
+    // Ambil data EMA & harga dari data historis
+    const ema20 = historicalData.EMA20;
+    const ema50 = historicalData.EMA50;
+    const current_close = historicalData.close;
 
     // Validasi data
     if (
@@ -111,9 +102,9 @@ const generatePrediction = async () => {
     }
 
     const body = {
-      ema20: parseFloat(ema20),
-      ema50: parseFloat(ema50),
-      current_close: parseFloat(current_close),
+      ema20: ema20,
+      ema50: ema50,
+      current_close: current_close,
       sentiment_score: compositeSentiment,
     };
 
@@ -180,20 +171,28 @@ const generatePrediction = async () => {
   // Case 1: Menunggu Input (Placeholder)
   if (!sentimentData || !historicalData) {
     return (
-      <Card className="border-2 shadow-lg bg-gradient-to-br from-background to-muted/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-primary" />
-            Prediksi LSTM
-          </CardTitle>
-          <CardDescription>
-            Memerlukan hasil sentimen & data historis untuk menghasilkan prediksi H+1.
-          </CardDescription>
+      <Card className="border-2 shadow-card hover:border-primary/30 transition-colors bg-gradient-to-br from-background to-muted/20">
+        <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+          <div className="flex items-center gap-3">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Brain className="h-5 w-5 text-primary" />
+                Prediksi Harga Hari Berikutnya (AI)
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Menggunakan model LSTM untuk memprediksi harga EUR/USD esok hari
+              </p>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <Brain className="h-12 w-12 mx-auto mb-4 opacity-40" />
-            <p>Menunggu analisis sentimen dan data teknikal...</p>
+        <CardContent className="pt-6">
+          <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 px-6 rounded-lg border-2 border-dashed border-border">
+            <Brain className="h-16 w-16 mb-4 opacity-30" />
+            <p className="font-medium text-lg">Menunggu Data Input</p>
+            <p className="text-sm mt-2 max-w-md">
+              Lengkapi Langkah 2 (Data Historis) dan Langkah 3 (Analisis Sentimen) 
+              untuk menghasilkan prediksi otomatis
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -203,20 +202,21 @@ const generatePrediction = async () => {
   // Case 2: Data Tersedia, Sedang Memuat (Loading)
   if (loading) {
     return (
-        <Card className="border-2 shadow-lg bg-gradient-to-br from-background to-muted/20">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+        <Card className="border-2 shadow-card hover:border-primary/30 transition-colors bg-gradient-to-br from-background to-muted/20">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+                <CardTitle className="flex items-center gap-2 text-xl">
                     <Brain className="h-5 w-5 text-primary" />
-                    Prediksi LSTM (H+1)
+                    Prediksi Harga Hari Berikutnya (AI)
                 </CardTitle>
                 <CardDescription>
-                    Memproses input EMA dan Sentimen...
+                    Menggunakan model LSTM untuk analisis prediktif...
                 </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="text-center py-8">
-                    <Loader2 className="h-12 w-12 mx-auto animate-spin text-primary mb-4" />
-                    <p className="text-muted-foreground">Menghasilkan prediksi...</p>
+            <CardContent className="space-y-4 pt-6">
+                <div className="flex flex-col items-center justify-center py-16 rounded-lg border-2 border-dashed border-border">
+                    <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
+                    <p className="text-muted-foreground font-medium">Memproses data dengan AI...</p>
+                    <p className="text-sm text-muted-foreground mt-2">Menghitung prediksi berdasarkan EMA dan sentimen</p>
                 </div>
             </CardContent>
         </Card>
@@ -225,72 +225,87 @@ const generatePrediction = async () => {
 
   // Case 3: Hasil Prediksi Sudah Ada
   return (
-    <Card className="border-2 shadow-lg bg-gradient-to-br from-background to-muted/20">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <Card className="border-2 shadow-card hover:border-primary/30 transition-colors bg-gradient-to-br from-background to-muted/20">
+      <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+        <CardTitle className="flex items-center gap-2 text-xl">
           <Brain className="h-5 w-5 text-primary" />
-          Prediksi LSTM (H+1)
+          Prediksi Harga Hari Berikutnya (AI)
         </CardTitle>
-        <CardDescription>
-          Prediksi EUR/USD hari berikutnya menggunakan agregasi sentimen dan EMA.
+        <CardDescription className="text-base mt-2">
+          Hasil prediksi EUR/USD menggunakan model LSTM berdasarkan analisis teknikal dan sentimen
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6 pt-6">
         {prediction && (
-          <div className="space-y-4">
-            <div className="p-6 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20">
-              <div className="text-center space-y-2">
-                <p className="text-sm text-muted-foreground">Prediksi Harga Penutupan H+1 EUR/USD</p>
-                <p className="text-5xl font-bold text-primary">
+          <div className="space-y-6">
+            {/* Main Prediction Display */}
+            <div className="p-8 rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 border-2 border-primary/30 shadow-lg">
+              <div className="text-center space-y-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-2">
+                  <Target className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium text-primary">Prediksi Harga Penutupan Besok</span>
+                </div>
+                <p className="text-6xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                   ${prediction.predicted_close.toFixed(5)}
                 </p>
-                <div className="flex items-center justify-center gap-2 text-sm">
-                  {/* Menampilkan ikon dan warna berdasarkan tren */}
+                <div className="flex items-center justify-center gap-3 text-base pt-2">
                   {prediction.trend_direction.toLowerCase() === "bullish" ? (
-                    <TrendingUp className="h-4 w-4 text-success" />
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/20 border-2 border-green-500/30">
+                      <ArrowUpRight className="h-5 w-5 text-green-600" />
+                      <span className="font-semibold text-green-600">BULLISH</span>
+                    </div>
                   ) : (
-                    <TrendingUp className="h-4 w-4 text-destructive rotate-180" /> // Menggunakan rotate untuk tren bearish
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/20 border-2 border-red-500/30">
+                      <ArrowDownRight className="h-5 w-5 text-red-600" />
+                      <span className="font-semibold text-red-600">BEARISH</span>
+                    </div>
                   )}
-                  <span className={
-                    prediction.trend_direction.toLowerCase() === "bullish" ? "text-success" : "text-destructive"
-                  }>
-                    {prediction.trend_direction.toUpperCase()}
-                  </span>
-                  <span className="text-muted-foreground">
-                    ({(prediction.confidence * 100).toFixed(1)}% keyakinan)
-                  </span>
+                  <div className="px-4 py-2 rounded-full bg-muted border-2">
+                    <span className="font-semibold">
+                      {(prediction.confidence * 100).toFixed(1)}% Confidence
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Detail Metrik dan Data Agregasi */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="w-full p-4 rounded-lg bg-gradient-to-br from-success/10 to-success/5 border-2 border-success/20">
+            {/* Metrics Grid */}
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="p-5 rounded-xl bg-gradient-to-br from-green-500/10 to-green-500/5 border-2 border-green-500/20">
                 <div className="flex items-center gap-2 mb-2">
-                  <Target className="h-4 w-4 text-success" />
-                  <p className="text-xs font-semibold text-muted-foreground">Evaluasi MAPE</p>
+                  <Target className="h-5 w-5 text-green-600" />
+                  <p className="text-sm font-semibold text-muted-foreground">Model Accuracy (MAPE)</p>
                 </div>
-                <p className="text-3xl font-bold text-success">
+                <p className="text-4xl font-bold text-green-600">
                   {prediction.mape.toFixed(2)}%
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">Akurasi Model</p>
+                <p className="text-xs text-muted-foreground mt-2">Mean Absolute Percentage Error</p>
               </div>
               
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-lg bg-muted/30 border">
-                <p className="text-xs text-muted-foreground">EMA20</p>
-                <p className="text-lg font-semibold">
+              <div className="p-5 rounded-xl bg-card border-2">
+                <p className="text-xs text-muted-foreground mb-2">📊 EMA 20</p>
+                <p className="text-2xl font-bold">
                   {prediction.aggregated_data.avg_ema20.toFixed(5)}
                 </p>
+                <p className="text-xs text-muted-foreground mt-1">Rata-rata periode 20 hari</p>
               </div>
-              <div className="p-3 rounded-lg bg-muted/30 border">
-                <p className="text-xs text-muted-foreground">EMA50</p>
-                <p className="text-lg font-semibold">
+              
+              <div className="p-5 rounded-xl bg-card border-2">
+                <p className="text-xs text-muted-foreground mb-2">📈 EMA 50</p>
+                <p className="text-2xl font-bold">
                   {prediction.aggregated_data.avg_ema50.toFixed(5)}
                 </p>
+                <p className="text-xs text-muted-foreground mt-1">Rata-rata periode 50 hari</p>
               </div>
+            </div>
+
+            {/* Info Box */}
+            <div className="p-4 rounded-lg bg-muted/30 border-2 border-dashed border-border">
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                💡 <strong>Catatan:</strong> Prediksi ini dihasilkan oleh model LSTM yang menganalisis 
+                pola historis harga, indikator teknikal (EMA), dan sentimen berita. Hasil prediksi sebaiknya 
+                digunakan sebagai referensi tambahan dalam pengambilan keputusan trading.
+              </p>
             </div>
           </div>
         )}
