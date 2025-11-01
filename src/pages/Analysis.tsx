@@ -34,11 +34,15 @@ interface AnalysisResponse {
 }
 
 interface HistoricalData {
-  close: number;
-  EMA20: number;
-  EMA50: number;
-  startDate: Date;
-  endDate: Date;
+  summary: {
+    close: number;
+    EMA20: number;
+    EMA50: number;
+    as_of_date: string;
+    pair: string;
+    trend_analysis: any;
+  };
+  analyze?: any;
 }
 
 // ==============================
@@ -263,10 +267,6 @@ const Analysis = () => {
             <HistoricalDataForm
               onDataFetched={(data: any) => {
                 setHistoricalData(data);
-                if (data?.startDate && data?.endDate) {
-                  setStartDate(new Date(data.startDate));
-                  setEndDate(new Date(data.endDate));
-                }
               }}
             />
           </CardContent>

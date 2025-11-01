@@ -22,9 +22,15 @@ interface AnalysisResponse {
 }
 
 interface HistoricalData {
-  close: number;
-  EMA20: number;
-  EMA50: number;
+  summary: {
+    close: number;
+    EMA20: number;
+    EMA50: number;
+    as_of_date: string;
+    pair: string;
+    trend_analysis: any;
+  };
+  analyze?: any;
 }
 
 interface PredictionResult {
@@ -86,9 +92,9 @@ const generatePrediction = async () => {
     const compositeSentiment = (titleSentiment + contentSentiment) / 2;
 
     // Ambil data EMA & harga dari data historis
-    const ema20 = historicalData.EMA20;
-    const ema50 = historicalData.EMA50;
-    const current_close = historicalData.close;
+    const ema20 = historicalData.summary.EMA20;
+    const ema50 = historicalData.summary.EMA50;
+    const current_close = historicalData.summary.close;
 
     // Validasi data
     if (
