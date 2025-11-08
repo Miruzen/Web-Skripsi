@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { TrendingUp, BarChart3, Home } from "lucide-react";
+import { TrendingUp, BarChart3, Home, User } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 
 const Navigation = () => {
@@ -8,6 +8,7 @@ const Navigation = () => {
   const navItems = [
     { path: "/", label: "Beranda", icon: Home },
     { path: "/analysis", label: "Analisis", icon: BarChart3 },
+    { path: "/about", label: "About", icon: User },
   ];
 
   return (
