@@ -21,10 +21,10 @@ const About = () => {
   }, []);
 
   const education = [
-    { title: "SD Kalam Kudus", year: "2008-2014" },
-    { title: "Sekolah Menengah Poilam Suwa", year: "2014-2017" },
-    { title: "Universitas Tarumanagara", year: "2017-2021" },
-    { title: "Entrepreneur", year: "2021-Present" },
+    { title: "SD Kalam Kudus", year: "2010-2016" },
+    { title: "Sekolah Menengah Poilam Suwa Malaysia", year: "2016-2022" },
+    { title: "Universitas Tarumanagara", year: "2022-Present" },
+    { title: "Entrepreneur", year: "2024-Present" },
   ];
 
   const techSkills = [
@@ -63,16 +63,16 @@ const About = () => {
             <div className="absolute inset-0 bg-gradient-primary rounded-full blur-2xl opacity-50 animate-pulse" />
             <img
               src={authorPhoto}
-              alt="Koferry Artaniwan"
+              alt="Nanda Goaw Putra"
               className="relative w-48 h-48 rounded-full object-cover border-4 border-primary shadow-glow"
             />
           </div>
           <div className="animate-fade-in" style={{ animationDelay: "0.2s" }}>
             <h1 className="text-5xl md:text-7xl font-bold mb-4 bg-gradient-primary bg-clip-text text-transparent">
-              Koferry Artaniwan
+              Nanda Goaw Putra 
             </h1>
             <p className="text-xl text-muted-foreground">
-              Full Stack Developer & Digital Creator
+              Undegraduate Student | Entrepreneur
             </p>
           </div>
         </div>
