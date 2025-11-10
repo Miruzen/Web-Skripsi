@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Globe, Download, Loader2, ExternalLink, Sparkles } from "lucide-react";
+import { Globe, Download, Loader2, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -23,22 +23,10 @@ interface ScrapeResult {
   }>;
 }
 
-interface NewsArticle {
-  title: string;
-  content: string;
-  author?: string;
-  date?: string;
-}
-
-interface ScrapeFormProps {
-  onNewsClick?: (article: NewsArticle) => void;
-}
-
-export default function ScrapeForm({ onNewsClick }: ScrapeFormProps) {
+export default function ScrapeForm() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ScrapeResult | null>(null); // Menggunakan ScrapeResult
-  const [loadingArticle, setLoadingArticle] = useState<string | null>(null);
   const { toast } = useToast();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -74,46 +62,6 @@ export default function ScrapeForm({ onNewsClick }: ScrapeFormProps) {
       });
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function handleNewsClick(articleUrl: string) {
-    if (!onNewsClick) return;
-    
-    setLoadingArticle(articleUrl);
-    try {
-      const { data, error } = await supabase.functions.invoke<ScrapeResult>("scrape-news", {
-        body: { url: articleUrl }
-      });
-
-      if (error) throw error;
-
-      // Extract article data
-      const article = data.items[0];
-      if (article && article.content) {
-        onNewsClick({
-          title: article.title,
-          content: article.content,
-          author: article.author,
-          date: article.date,
-        });
-        
-        toast({
-          title: "Artikel Dimuat ✅",
-          description: "Artikel berhasil dimuat untuk analisis sentimen",
-        });
-      } else {
-        throw new Error("Konten artikel tidak dapat diambil");
-      }
-    } catch (err: any) {
-      console.error("Article fetch error:", err);
-      toast({
-        title: "Error",
-        description: err?.message || "Gagal mengambil konten artikel",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingArticle(null);
     }
   }
 
@@ -240,40 +188,17 @@ export default function ScrapeForm({ onNewsClick }: ScrapeFormProps) {
                   <ul className="space-y-2">
                     {result.items.map((item, i) => (
                       <li key={i} className="group">
-                        <div className="flex items-start gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors">
-                          <a
-                            href={item.link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-start gap-2 flex-1"
-                          >
-                            <ExternalLink className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
-                            <span className="text-sm text-foreground group-hover:text-primary transition-colors">
-                              {item.title}
-                            </span>
-                          </a>
-                          {onNewsClick && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleNewsClick(item.link)}
-                              disabled={loadingArticle === item.link}
-                              className="h-6 px-2 text-xs gap-1 shrink-0"
-                            >
-                              {loadingArticle === item.link ? (
-                                <>
-                                  <Loader2 className="h-3 w-3 animate-spin" />
-                                  Loading...
-                                </>
-                              ) : (
-                                <>
-                                  <Sparkles className="h-3 w-3" />
-                                  Analisis
-                                </>
-                              )}
-                            </Button>
-                          )}
-                        </div>
+                        <a
+                          href={item.link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-start gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors"
+                        >
+                          <ExternalLink className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
+                          <span className="text-sm text-foreground group-hover:text-primary transition-colors">
+                            {item.title}
+                          </span>
+                        </a>
                       </li>
                     ))}
                   </ul>

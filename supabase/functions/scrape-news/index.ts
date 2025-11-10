@@ -122,10 +122,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    console.log(`Fetching URL: ${url}`);
     const res = await fetchWithRetry(url);
     if (!res.ok) {
-      console.error(`Fetch failed with status: ${res.status}`);
       return new Response(JSON.stringify({ error: `fetch failed: ${res.status}` }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -134,147 +132,8 @@ Deno.serve(async (req) => {
 
     const contentType = (res.headers.get("content-type") || "").toLowerCase();
     const text = await res.text();
-    console.log(`Received ${text.length} bytes, content-type: ${contentType}`);
 
     const items: Array<{ title: string; link: string; summary?: string; content?: string; author?: string; date?: string }> = [];
-
-    // Helper function to detect if URL is a single article page
-    function isArticlePage(urlString: string): boolean {
-      const articlePatterns = [
-        /\/news\/forex-news\/[^\/]+$/,  // investing.com article pattern
-        /\/forex-technical-analysis\/\d{4}\/\d{2}\//,  // dailyforex.com article pattern
-        /\/articles\//,
-        /\/analysis\//,
-        /-\d{5,}$/  // Ends with article ID
-      ];
-      return articlePatterns.some(pattern => pattern.test(urlString));
-    }
-
-    // Extract article content helper function
-    async function extractArticleContent(doc: Document, domain: string): Promise<{ content: string; author: string; date: string; title: string }> {
-      let content = "";
-      let author = "";
-      let date = "";
-      let title = "";
-
-      try {
-        // Get title from meta tags or h1
-        const titleMeta = doc.querySelector('meta[property="og:title"]');
-        const h1 = doc.querySelector('h1');
-        title = titleMeta?.getAttribute("content") || h1?.textContent?.trim() || "";
-
-        if (domain.includes("investing.com")) {
-          console.log("Extracting from investing.com article");
-          // Investing.com selectors
-          const articleDiv = doc.querySelector("div#article") || doc.querySelector("article");
-          if (articleDiv) {
-            const paragraphs = articleDiv.querySelectorAll("p");
-            const contentParts = [];
-            for (const p of paragraphs) {
-              const text = p.textContent?.trim() || "";
-              if (text && !text.toLowerCase().includes("advertisement") && text.length > 20) {
-                contentParts.push(text);
-              }
-            }
-            content = contentParts.join("\n\n");
-          }
-
-          // Extract author and date
-          const authorEl = doc.querySelector('a[data-test="article-provider-link"]') || 
-                          doc.querySelector('.author-name') ||
-                          doc.querySelector('[rel="author"]');
-          const dateEl = doc.querySelector('time[data-test="article-publish-date"]') ||
-                        doc.querySelector('time');
-          
-          author = authorEl?.textContent?.trim() || "";
-          date = dateEl?.getAttribute("datetime") || dateEl?.textContent?.trim() || "";
-
-        } else if (domain.includes("dailyforex.com")) {
-          console.log("Extracting from dailyforex.com article");
-          // DailyForex selectors
-          const contentDiv = doc.querySelector("div.content-body.article-content") || 
-                            doc.querySelector("div.article-content") ||
-                            doc.querySelector("article");
-          if (contentDiv) {
-            const paragraphs = contentDiv.querySelectorAll("p");
-            const contentParts = [];
-            for (const p of paragraphs) {
-              const text = p.textContent?.trim() || "";
-              if (text && text.length > 20) {
-                contentParts.push(text);
-              }
-            }
-            content = contentParts.join("\n\n");
-          }
-
-          // Extract author and date from JSON-LD if available
-          const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
-          for (const script of scripts) {
-            try {
-              const data = JSON.parse(script.textContent || "");
-              if (data["@type"] === "NewsArticle" || data["@type"] === "Article") {
-                author = data.author?.name || data.author || "";
-                date = data.datePublished || data.dateModified || "";
-                if (!title) title = data.headline || "";
-                break;
-              }
-            } catch {
-              // Ignore JSON parse errors
-            }
-          }
-        }
-        
-        console.log(`Extracted article - Title length: ${title.length}, Content length: ${content.length}`);
-      } catch (error) {
-        console.error("Error extracting content:", error);
-      }
-
-      return { content, author, date, title };
-    }
-
-    // Check if this is a single article page first
-    if (isArticlePage(url)) {
-      console.log("Detected as article page, extracting content...");
-      const doc = new DOMParser().parseFromString(text, "text/html");
-      if (!doc) {
-        return new Response(
-          JSON.stringify({ error: "failed to parse html" }),
-          { status: 500, headers: corsHeaders }
-        );
-      }
-
-      const { content, author, date, title } = await extractArticleContent(doc, parsed.hostname);
-      
-      if (content && content.length > 100) {
-        console.log("Successfully extracted article content");
-        items.push({
-          title,
-          link: url,
-          content,
-          author,
-          date
-        });
-        
-        // Return immediately for single article
-        return new Response(
-          JSON.stringify({
-            url,
-            domain: parsed.hostname,
-            count: 1,
-            items: items,
-          }),
-          { headers: corsHeaders }
-        );
-      } else {
-        console.warn("Failed to extract article content or content too short");
-        return new Response(
-          JSON.stringify({ error: "Could not extract article content. The page might be protected or have a different structure." }),
-          { status: 400, headers: corsHeaders }
-        );
-      }
-    }
-
-    console.log("Detected as listing page, extracting news links...");
     try {
       if (contentType.includes("application/json") || text.trim().startsWith("{") || text.trim().startsWith("[")) {
         try {
@@ -384,8 +243,98 @@ Deno.serve(async (req) => {
         }
       }
     }
+      if (items.length === 0 && (url.includes("/news/") || url.includes("/article/"))) {
+    // Single article page
+    const doc = new DOMParser().parseFromString(text, "text/html");
+    if (!doc) {
+      return new Response(
+        JSON.stringify({ error: "failed parse html" }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
 
-    // Deduplicate results
+    const { content, author, date } = await extractArticleContent(doc, parsed.hostname);
+    
+    // Get title from meta tags if not found in content
+    const titleMeta = doc.querySelector('meta[property="og:title"]');
+    const title = titleMeta?.getAttribute("content") || "";
+
+    if (content) {
+      items.push({
+        title,
+        link: url,
+        content,
+        author,
+        date
+      });
+    }
+  }
+
+    async function extractArticleContent(doc: Document, domain: string) {
+  let content = "";
+  let author = "";
+  let date = "";
+
+  try {
+    if (domain.includes("investing.com")) {
+      // Investing.com selectors based on your Python scraper
+      const articleDiv = doc.querySelector("div#article");
+      if (articleDiv) {
+        const paragraphs = articleDiv.querySelectorAll("p");
+        const contentParts = [];
+        for (const p of paragraphs) {
+          const text = p.textContent?.trim() || "";
+          if (text && !text.toLowerCase().includes("advertisement")) {
+            contentParts.push(text);
+          }
+        }
+        content = contentParts.join(" ");
+      }
+
+      // Extract author and date
+      const authorEl = doc.querySelector('a[data-test="article-provider-link"]');
+      const dateEl = doc.querySelector('time[data-test="article-publish-date"]');
+      
+      author = authorEl?.textContent?.trim() || "";
+      date = dateEl?.getAttribute("datetime") || "";
+
+    } else if (domain.includes("dailyforex.com")) {
+      // DailyForex selectors
+      const contentDiv = doc.querySelector("div.content-body.article-content");
+      if (contentDiv) {
+        const paragraphs = contentDiv.querySelectorAll("p");
+        const contentParts = [];
+        for (const p of paragraphs) {
+          const text = p.textContent?.trim() || "";
+          if (text) {
+            contentParts.push(text);
+          }
+        }
+        content = contentParts.join(" ");
+      }
+
+      // Extract author and date from JSON-LD if available
+      const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+      for (const script of scripts) {
+        try {
+          const data = JSON.parse(script.textContent || "");
+          if (data["@type"] === "NewsArticle") {
+            author = data.author?.name || "";
+            date = data.datePublished || "";
+            break;
+          }
+        } catch {
+          // Ignore JSON parse errors
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error extracting content:", error);
+  }
+
+  return { content, author, date };
+}
+
     const map = new Map<string, { title: string; link: string; summary?: string; content?: string; author?: string; date?: string }>();
     for (const it of items) {
       if (!it.link) continue;

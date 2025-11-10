@@ -60,27 +60,6 @@ const Analysis = () => {
   const { toast } = useToast();
 
   // ==============================
-  // 📰 Handle News Click
-  // ==============================
-  const handleNewsClick = (article: { title: string; content: string; author?: string; date?: string }) => {
-    setTitleInput(article.title);
-    setContentInput(article.content);
-    
-    // Scroll to Step 3 (sentiment analysis section)
-    setTimeout(() => {
-      const step3Element = document.querySelector('[data-step="3"]');
-      if (step3Element) {
-        step3Element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 100);
-    
-    toast({
-      title: "Artikel Berhasil Dimuat 📰",
-      description: "Silakan klik 'Analisis Berita' untuk melanjutkan",
-    });
-  };
-
-  // ==============================
   // 🔍 Analisis Sentimen
   // ==============================
   const analyzeSentiment = async () => {
@@ -262,7 +241,7 @@ const Analysis = () => {
             </div>
           </CardHeader>
           <CardContent className="pt-6">
-            <ScrapeForm onNewsClick={handleNewsClick} />
+            <ScrapeForm />
           </CardContent>
         </Card>
 
@@ -299,7 +278,7 @@ const Analysis = () => {
         </Card>
 
         {/* 💬 Step 3: Analisis Sentimen */}
-        <Card className="shadow-card border-2 hover:border-primary/30 transition-colors" data-step="3">
+        <Card className="shadow-card border-2 hover:border-primary/30 transition-colors">
           <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold text-lg">
