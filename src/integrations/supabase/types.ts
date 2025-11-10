@@ -14,7 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      mood_series: {
+        Row: {
+          c_neg: number | null
+          c_neutral: number | null
+          c_pos: number | null
+          close: number | null
+          created_at: string | null
+          date: string
+          ema20: number | null
+          ema50: number | null
+          id: string
+          mood_score: number | null
+          norm_close: number | null
+          norm_ema20: number | null
+          norm_ema50: number | null
+          t_neg: number | null
+          t_neutral: number | null
+          t_pos: number | null
+        }
+        Insert: {
+          c_neg?: number | null
+          c_neutral?: number | null
+          c_pos?: number | null
+          close?: number | null
+          created_at?: string | null
+          date: string
+          ema20?: number | null
+          ema50?: number | null
+          id?: string
+          mood_score?: number | null
+          norm_close?: number | null
+          norm_ema20?: number | null
+          norm_ema50?: number | null
+          t_neg?: number | null
+          t_neutral?: number | null
+          t_pos?: number | null
+        }
+        Update: {
+          c_neg?: number | null
+          c_neutral?: number | null
+          c_pos?: number | null
+          close?: number | null
+          created_at?: string | null
+          date?: string
+          ema20?: number | null
+          ema50?: number | null
+          id?: string
+          mood_score?: number | null
+          norm_close?: number | null
+          norm_ema20?: number | null
+          norm_ema50?: number | null
+          t_neg?: number | null
+          t_neutral?: number | null
+          t_pos?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
