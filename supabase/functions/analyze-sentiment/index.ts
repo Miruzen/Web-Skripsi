@@ -168,10 +168,15 @@ serve(async (req) => {
       }
     }
 
+    console.log("Returning analysis results:", { 
+      hasTitle: !!titleAnalysis, 
+      hasContent: !!contentAnalysis 
+    });
+
     return new Response(
       JSON.stringify({
-        title: titleAnalysis ? { model: "ProsusAI/finbert", analysis: titleAnalysis } : null,
-        content: contentAnalysis ? { model: "allenai/longformer-base-4096", analysis: contentAnalysis } : null,
+        title: titleAnalysis,
+        content: contentAnalysis,
         errors: errors.length ? errors : null,
       }),
       { headers: corsHeaders }
