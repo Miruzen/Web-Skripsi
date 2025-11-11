@@ -48,7 +48,7 @@ const MoodSeriesChart = ({ startDate, endDate }: MoodSeriesChartProps) => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL_2}/functions/v1/get-mood-series`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-mood-series`,
         {
           method: "POST",
           headers: {

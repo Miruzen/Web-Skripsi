@@ -5,35 +5,68 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
   "Content-Type": "application/json",
 };
 
 serve(async (req: Request) => {
-  // handle preflight immediately
+  // ✅ Handle preflight request (CORS)
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // create supabase client using env keys
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!; // used for server
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // ✅ Ambil konfigurasi dari environment
+    const supabaseUrl =
+      Deno.env.get("SUPABASE_URL") ||
+      Deno.env.get("VITE_SUPABASE_URL") ||
+      "https://gxvtpfroptavwkibqlss.supabase.co";
 
-    // Accept both snake_case and camelCase to be robust
+    const supabaseServiceKey =
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
+      Deno.env.get("SUPABASE_ANON_KEY") ||
+      Deno.env.get("VITE_SUPABASE_ANON_KEY");
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("❌ Missing Supabase credentials!");
+      return new Response(
+        JSON.stringify({
+          error:
+            "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY / ANON_KEY in environment",
+        }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    // ✅ Inisialisasi Supabase client
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${supabaseServiceKey}`,
+          apikey: supabaseServiceKey,
+        },
+      },
+    });
+
+    // ✅ Ambil body request
     const body = await req.json().catch(() => ({}));
-    const start_date = body.start_date || body.startDate || body.start || null;
+    const start_date =
+      body.start_date || body.startDate || body.start || null;
     const end_date = body.end_date || body.endDate || body.end || null;
 
     if (!start_date || !end_date) {
       return new Response(
-        JSON.stringify({ error: "start_date and end_date required (YYYY-MM-DD)" }),
+        JSON.stringify({
+          error: "start_date and end_date required (YYYY-MM-DD)",
+        }),
         { status: 400, headers: corsHeaders }
       );
     }
 
-    // Ensure date strings — you may validate format here if needed
+    console.log(`📅 Fetching mood_series from ${start_date} → ${end_date}`);
+
+    // ✅ Query ke tabel
     const { data, error } = await supabase
       .from("mood_series")
       .select("*")
@@ -42,7 +75,7 @@ serve(async (req: Request) => {
       .order("date", { ascending: true });
 
     if (error) {
-      console.error("Supabase query error:", error);
+      console.error("❌ Supabase query error:", error);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: corsHeaders,
@@ -72,9 +105,11 @@ serve(async (req: Request) => {
     });
   } catch (err: any) {
     console.error("❌ Error get-mood-series:", err);
-    return new Response(JSON.stringify({ error: String(err?.message ?? err) }), {
-      status: 500,
-      headers: corsHeaders,
-    });
+    return new Response(
+      JSON.stringify({
+        error: String(err?.message ?? err),
+      }),
+      { status: 500, headers: corsHeaders }
+    );
   }
 });

@@ -80,8 +80,8 @@ const Analysis = () => {
     });
   };
 
-  // ==============================
-  // 🔍 Analisis Sentimen
+    // ==============================
+  // 🔍 Analisis Sentimen (Updated)
   // ==============================
   const analyzeSentiment = async () => {
     if (!titleInput.trim() && !contentInput.trim()) {
@@ -92,33 +92,76 @@ const Analysis = () => {
       });
       return;
     }
+    
 
     setIsAnalyzing(true);
+    setSentimentResult(null);
+
     try {
-      const { data, error } = await supabase.functions.invoke<AnalysisResponse>(
-        "analyze-sentiment",
-        {
-          body: { title: titleInput, content: contentInput },
-        }
-      );
+      console.log("🚀 Mengirim ke Supabase Function analyze-sentiment...");
 
-      if (error) throw error;
-      setSentimentResult(data);
-
-      toast({
-        title: "Analisis Selesai ✅",
-        description: "Sentimen berhasil dianalisis menggunakan model FinBERT/LongFormer.",
+      const { data, error } = await supabase.functions.invoke("analyze-sentiment", {
+        body: { title: titleInput, content: contentInput },
       });
-    } catch (error: any) {
+      if (error) {
+        console.error("❌ Supabase invoke error:", error);
+        throw error;
+      }
+
+      console.log("📦 Respons dari Supabase:", data);
+
+      // === CASE 1: Jika Supabase mengirim error langsung ===
+      if (!data) {
+        toast({
+          title: "Gagal Menerima Respons 😕",
+          description: "Server tidak mengembalikan data apa pun.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // === CASE 2: Jika ada 'errors' tapi juga ada sebagian hasil (partial success)
+      if (data.errors && data.errors.length > 0) {
+        console.warn("⚠️ Ada error parsial:", data.errors);
+        toast({
+          title: "Analisis Parsial ⚠️",
+          description: "Beberapa model gagal dijalankan. Periksa log untuk detailnya.",
+        });
+      }
+
+      // === CASE 3: Pastikan struktur sesuai (title/content tidak null)
+      if (data.title || data.content) {
+        setSentimentResult({
+          title: data.title ?? null,
+          content: data.content ?? null,
+          errors: data.errors ?? [],
+        });
+
+        toast({
+          title: "Analisis Berhasil ✅",
+          description: "Sentimen berhasil dianalisis via Supabase & HuggingFace Space.",
+        });
+      } else {
+        console.error("🚫 Data tidak memiliki field 'title' atau 'content':", data);
+        toast({
+          title: "Tidak Ada Hasil 😕",
+          description:
+            "Server mengembalikan respons, namun tanpa hasil sentimen. Coba ulangi beberapa saat lagi.",
+          variant: "destructive",
+        });
+      }
+    } catch (err: any) {
+      console.error("🔥 Error saat analisis:", err);
       toast({
-        title: "Error",
-        description: error.message || "Gagal menganalisis sentimen.",
+        title: "Terjadi Kesalahan 🚨",
+        description: err.message || "Gagal menghubungkan ke server analisis.",
         variant: "destructive",
       });
     } finally {
       setIsAnalyzing(false);
     }
   };
+
 
   // ==============================
   // 🧭 Helper Rendering
