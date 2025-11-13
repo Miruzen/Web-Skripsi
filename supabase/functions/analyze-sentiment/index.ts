@@ -12,7 +12,7 @@ const HF_SPACE_URL = "https://miruzen-modela-api.hf.space/analyze";
 
 // 2️⃣ Router inference baru (backup)
 const HF_ROUTER_URL = "https://router.huggingface.co/hf-inference";
-
+// Ambil API key dari environment
 const HF_API_KEY = Deno.env.get("HF_API_KEY");
 
 serve(async (req) => {

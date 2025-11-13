@@ -136,7 +136,7 @@ const Analysis = () => {
           content: data.content ?? null,
           errors: data.errors ?? [],
         });
-
+        // Sukses penuh
         toast({
           title: "Analisis Berhasil ✅",
           description: "Sentimen berhasil dianalisis via Supabase & HuggingFace Space.",

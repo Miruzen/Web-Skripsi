@@ -47,6 +47,7 @@ const MoodSeriesChart = ({ startDate, endDate }: MoodSeriesChartProps) => {
 
     setLoading(true);
     try {
+      // Fetch data dari Supabase Function 'get-mood-series'
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-mood-series`,
         {
