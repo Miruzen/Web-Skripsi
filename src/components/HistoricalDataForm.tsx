@@ -141,7 +141,16 @@ const HistoricalDataForm = ({ onDataFetched }: HistoricalDataFormProps) => {
       setSummary(summaryData);
       setAnalyze(analyzeData);
 
-      if (onDataFetched) onDataFetched({ summary: summaryData, analyze: analyzeData });
+      if (onDataFetched) {
+        onDataFetched({ 
+          summary: summaryData, 
+          analyze: {
+            ...analyzeData,
+            start_date: format(startDate, "yyyy-MM-dd"),
+            end_date: format(endDate, "yyyy-MM-dd")
+          }
+        });
+      }
 
       toast({
         title: "Berhasil",

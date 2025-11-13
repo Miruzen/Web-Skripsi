@@ -331,7 +331,7 @@ const Analysis = () => {
             <HistoricalDataForm
               onDataFetched={(data: any) => {
                 setHistoricalData(data);
-                // Sinkronisasi tanggal dari data yang diambil
+                // Set tanggal untuk MoodSeriesChart
                 if (data?.analyze?.start_date && data?.analyze?.end_date) {
                   setStartDate(new Date(data.analyze.start_date));
                   setEndDate(new Date(data.analyze.end_date));

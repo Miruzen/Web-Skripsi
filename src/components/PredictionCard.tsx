@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Brain, TrendingUp, Target, Loader2, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Brain, TrendingUp, Target, Loader2, ArrowUpRight, ArrowDownRight, Calendar } from "lucide-react";
+import { format, addDays, parseISO } from "date-fns";
+import { id } from "date-fns/locale";
 
 // ==============================
 // 🧩 Types (Diterjemahkan)
@@ -30,7 +32,10 @@ interface HistoricalData {
     pair: string;
     trend_analysis: any;
   };
-  analyze?: any;
+  analyze?: {
+    start_date?: string;
+    end_date?: string;
+  };
 }
 
 interface PredictionResult {
@@ -170,6 +175,33 @@ const generatePrediction = async () => {
     return positive - negative;
   };
 
+  // Hitung tanggal prediksi (H+1 dari Tanggal Akhir)
+  const getPredictionDate = (): string => {
+    if (!historicalData?.summary?.as_of_date) return "-";
+    try {
+      const endDate = parseISO(historicalData.summary.as_of_date);
+      const predictionDate = addDays(endDate, 1);
+      return format(predictionDate, "dd MMMM yyyy", { locale: id });
+    } catch {
+      return "-";
+    }
+  };
+
+  // Ambil rentang tanggal untuk analisis tren
+  const getTrendDateRange = (): { start: string; end: string } => {
+    const startDate = historicalData?.analyze?.start_date || "-";
+    const endDate = historicalData?.summary?.as_of_date || "-";
+    
+    try {
+      return {
+        start: startDate !== "-" ? format(parseISO(startDate), "dd MMM yyyy", { locale: id }) : "-",
+        end: endDate !== "-" ? format(parseISO(endDate), "dd MMM yyyy", { locale: id }) : "-"
+      };
+    } catch {
+      return { start: "-", end: "-" };
+    }
+  };
+
   // =====================================
   // 🎨 Rendering
   // =====================================
@@ -248,27 +280,40 @@ const generatePrediction = async () => {
             <div className="p-8 rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 border-2 border-primary/30 shadow-lg">
               <div className="text-center space-y-3">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-2">
-                  <Target className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium text-primary">Prediksi Harga Penutupan Besok</span>
+                  <Calendar className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium text-primary">
+                    Prediksi Harga Penutupan Tanggal: {getPredictionDate()}
+                  </span>
                 </div>
                 <p className="text-6xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                   ${prediction.predicted_close.toFixed(5)}
                 </p>
-                <div className="flex items-center justify-center gap-3 text-base pt-2">
-                  {prediction.trend_direction.toLowerCase() === "bullish" ? (
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/20 border-2 border-green-500/30">
-                      <ArrowUpRight className="h-5 w-5 text-green-600" />
-                      <span className="font-semibold text-green-600">BULLISH</span>
+                <div className="flex flex-col items-center gap-3 text-base pt-2">
+                  <div className="flex items-center gap-3">
+                    {prediction.trend_direction.toLowerCase() === "bullish" ? (
+                      <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/20 border-2 border-green-500/30">
+                        <ArrowUpRight className="h-5 w-5 text-green-600" />
+                        <span className="font-semibold text-green-600">BULLISH</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/20 border-2 border-red-500/30">
+                        <ArrowDownRight className="h-5 w-5 text-red-600" />
+                        <span className="font-semibold text-red-600">BEARISH</span>
+                      </div>
+                    )}
+                    <div className="px-4 py-2 rounded-full bg-muted border-2">
+                      <span className="font-semibold">
+                        {(prediction.confidence * 100).toFixed(1)}% Confidence
+                      </span>
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/20 border-2 border-red-500/30">
-                      <ArrowDownRight className="h-5 w-5 text-red-600" />
-                      <span className="font-semibold text-red-600">BEARISH</span>
-                    </div>
-                  )}
-                  <div className="px-4 py-2 rounded-full bg-muted border-2">
-                    <span className="font-semibold">
-                      {(prediction.confidence * 100).toFixed(1)}% Confidence
+                  </div>
+                  {/* Trend Date Range */}
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card/50 border border-border">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      Analisis Periode: <span className="font-semibold text-foreground">
+                        {getTrendDateRange().start} - {getTrendDateRange().end}
+                      </span>
                     </span>
                   </div>
                 </div>
