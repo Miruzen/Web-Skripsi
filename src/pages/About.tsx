@@ -1,5 +1,6 @@
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, BookOpen, Target, Cpu, TrendingUp, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 import authorPhoto from "@/assets/author-photo.png";
 import projectKao from "@/assets/project-kao.png";
 import projectGold from "@/assets/project-gold.png";
@@ -56,8 +57,108 @@ const About = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
-      {/* Header Section */}
-      <section className="container mx-auto px-6 py-20 animate-fade-in">
+      {/* About Application Section */}
+      <section className="container mx-auto px-6 py-16 animate-fade-in">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-primary bg-clip-text text-transparent">
+              Tentang Aplikasi
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Sistem Prediksi EUR/USD dengan Analisis Sentimen & Teknikal
+            </p>
+          </div>
+
+          {/* Purpose Card */}
+          <Card className="p-8 mb-6 bg-card/50 backdrop-blur border-border animate-fade-in" style={{ animationDelay: "0.1s" }}>
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-xl bg-primary/10 text-primary">
+                <Target className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-foreground mb-3">Tujuan Pengembangan</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Aplikasi ini dikembangkan sebagai bagian dari tugas akhir untuk memenuhi syarat kesarjanaan Strata 1 (S1). 
+                  Latar belakang pembuatan aplikasi ini adalah adanya <span className="text-primary font-medium">kebutuhan informasi dan tools</span> yang 
+                  dapat memprediksi pergerakan mata uang Forex berdasarkan analisis sentimen dan teknikal secara bersamaan.
+                </p>
+                <p className="text-muted-foreground leading-relaxed mt-3">
+                  Pasangan mata uang <span className="text-primary font-medium">EUR/USD</span> dipilih karena kontribusinya yang sangat signifikan 
+                  dalam pasar pertukaran global, yaitu sekitar <span className="text-primary font-medium">30-40%</span> dari total volume perdagangan mata uang dunia.
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Methodology Card */}
+          <Card className="p-8 mb-6 bg-card/50 backdrop-blur border-border animate-fade-in" style={{ animationDelay: "0.2s" }}>
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-xl bg-accent/10 text-accent">
+                <Cpu className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-foreground mb-3">Metodologi & Teknologi</h3>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <TrendingUp className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                    <p className="text-muted-foreground leading-relaxed">
+                      <span className="text-foreground font-medium">Analisis Teknikal:</span> Menggunakan algoritma 
+                      <span className="text-primary font-medium"> Moving Average (EMA)</span> untuk mengidentifikasi tren harga historis.
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <BookOpen className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                    <p className="text-muted-foreground leading-relaxed">
+                      <span className="text-foreground font-medium">Analisis Sentimen:</span> Menggunakan model 
+                      <span className="text-primary font-medium"> FinBERT-LSIMF</span>, yang merupakan kombinasi dari FinBERT dan LongFormer, 
+                      untuk menganalisis teks berita dan menghasilkan skor sentimen.
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Cpu className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                    <p className="text-muted-foreground leading-relaxed">
+                      <span className="text-foreground font-medium">Model Prediksi:</span> Data teknikal dan sentimen digabungkan menggunakan 
+                      <span className="text-primary font-medium"> LSTM (Long Short-Term Memory)</span> dengan arsitektur 3 layer, 
+                      dilengkapi dengan <span className="text-primary font-medium">dropout</span> untuk mencegah overfitting, 
+                      dan dense layer dengan output tunggal untuk prediksi harga.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* How to Use Card */}
+          <Card className="p-8 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20 animate-fade-in" style={{ animationDelay: "0.3s" }}>
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-xl bg-primary/10 text-primary">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold text-foreground mb-3">Cara Penggunaan</h3>
+                <p className="text-muted-foreground leading-relaxed mb-4">
+                  Panduan lengkap penggunaan aplikasi dapat ditemukan pada halaman <span className="text-primary font-medium">Analisis</span>. 
+                  Di sana Anda dapat memasukkan data historis, melakukan analisis sentimen berita, dan mendapatkan prediksi harga.
+                </p>
+                <Link 
+                  to="/analysis" 
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                >
+                  Mulai Analisis <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </section>
+
+      {/* Divider */}
+      <div className="container mx-auto px-6">
+        <div className="max-w-4xl mx-auto border-t border-border/50" />
+      </div>
+
+      {/* Header Section - Developer */}
+      <section className="container mx-auto px-6 py-16 animate-fade-in">
         <div className="flex flex-col items-center gap-8 text-center">
           <div className="relative animate-scale-in">
             <div className="absolute inset-0 bg-gradient-primary rounded-full blur-2xl opacity-50 animate-pulse" />
