@@ -308,6 +308,7 @@ export default function ScrapeForm({ onNewsClick }: ScrapeFormProps) {
                           ) : (
                             <Sparkles className="h-3 w-3" />
                           )}
+                          <span className="ml-1">Analysis</span>
                         </Button>
                       )}
                     </li>
