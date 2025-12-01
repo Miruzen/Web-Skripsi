@@ -31,15 +31,19 @@ const PredictionTabs = () => {
   const [range, setRange] = useState<7 | 30>(7);
   const [activeTab, setActiveTab] = useState("ema");
 
+  // Data tersedia hingga 27 Oktober 2024
+  const DATA_END_DATE = new Date("2024-10-27");
+
   const fetchData = async () => {
     setLoading(true);
     try {
-      const today = new Date();
-      const pastDate = new Date();
-      pastDate.setDate(today.getDate() - range);
-// Fetch data dari Supabase Function 'get-mood-series'
+      const endDate = DATA_END_DATE;
+      const startDate = new Date(endDate);
+      startDate.setDate(endDate.getDate() - range);
+
+      // Fetch data dari Supabase Function 'get-mood-series' (project lama)
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-mood-series`,
+        "https://gxvtpfroptavwkibqlss.supabase.co/functions/v1/get-mood-series",
         {
           method: "POST",
           headers: {
@@ -47,8 +51,8 @@ const PredictionTabs = () => {
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({
-            start_date: format(pastDate, "yyyy-MM-dd"),
-            end_date: format(today, "yyyy-MM-dd"),
+            start_date: format(startDate, "yyyy-MM-dd"),
+            end_date: format(endDate, "yyyy-MM-dd"),
           }),
         }
       );
