@@ -4,10 +4,14 @@ import { DOMParser, Element, Document } from "https://deno.land/x/deno_dom@v0.1.
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers':
+  'authorization, x-client-info, apikey, content-type, Access-Control-Request-Private-Network',
   'Access-Control-Max-Age': '86400',
-  'Content-Type': 'application/json'
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Private-Network': 'true',
 };
+
+
 
 const USER_AGENTS = [
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",

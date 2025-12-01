@@ -27,7 +27,7 @@ interface ScrapedNewsItem {
 
 const NEWS_SOURCES = [
   "https://www.investing.com/news/forex-news",
-  "https://www.dailyforex.com/articles/currency-pairs/english/5754/1"
+  "https://www.dailyforex.com/api/articles/currency-pairs/english/5754/1"
 ];
 
 const NewsCard = () => {

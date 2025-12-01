@@ -49,7 +49,7 @@ const MoodSeriesChart = ({ startDate, endDate }: MoodSeriesChartProps) => {
     try {
       // Fetch data dari Supabase Function 'get-mood-series'
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-mood-series`,
+        `${import.meta.env.VITE_SUPABASE_URL_2}/functions/v1/get-mood-series`,
         {
           method: "POST",
           headers: {
