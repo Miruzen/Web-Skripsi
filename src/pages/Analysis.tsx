@@ -419,6 +419,42 @@ const Analysis = () => {
                           {renderProbabilities(sentimentResult.content)}
                         </div>
                       )}
+                      
+                      {/* Mood Score Calculation */}
+                      {(sentimentResult.title || sentimentResult.content) && (
+                        <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-2 border-blue-500/20">
+                          <p className="font-semibold text-base mb-2 flex items-center gap-2">
+                            🎯 Mood Score (Anchor Point)
+                          </p>
+                          <p className="text-xs text-muted-foreground mb-3">
+                            Formula: (Positif Judul + Positif Konten) - (Negatif Judul + Negatif Konten)
+                          </p>
+                          {(() => {
+                            const titlePos = sentimentResult.title?.probabilities.positive || 0;
+                            const titleNeg = sentimentResult.title?.probabilities.negative || 0;
+                            const contentPos = sentimentResult.content?.probabilities.positive || 0;
+                            const contentNeg = sentimentResult.content?.probabilities.negative || 0;
+                            const moodScore = (titlePos + contentPos) - (titleNeg + contentNeg);
+                            const moodLabel = moodScore > 0.1 ? "Bullish 📈" : moodScore < -0.1 ? "Bearish 📉" : "Netral ⚖️";
+                            const moodColor = moodScore > 0.1 ? "text-green-600" : moodScore < -0.1 ? "text-red-600" : "text-gray-600";
+                            
+                            return (
+                              <div className="flex items-center justify-between">
+                                <div className="text-center flex-1">
+                                  <span className={`text-3xl font-bold ${moodColor}`}>
+                                    {moodScore > 0 ? "+" : ""}{moodScore.toFixed(4)}
+                                  </span>
+                                  <p className={`text-sm font-medium mt-1 ${moodColor}`}>{moodLabel}</p>
+                                </div>
+                                <div className="text-xs text-muted-foreground text-right space-y-1">
+                                  <p>Pos: ({(titlePos * 100).toFixed(1)}% + {(contentPos * 100).toFixed(1)}%)</p>
+                                  <p>Neg: ({(titleNeg * 100).toFixed(1)}% + {(contentNeg * 100).toFixed(1)}%)</p>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
